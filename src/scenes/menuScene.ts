@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 
 export default class MenuScene extends Phaser.Scene {
-    playButton: Phaser.GameObjects.Image;
+    play5Button: Phaser.GameObjects.Image;
+    play3Button: Phaser.GameObjects.Image;
     menuMusic: Phaser.Sound.BaseSound;
 
     constructor() {
@@ -16,23 +17,41 @@ export default class MenuScene extends Phaser.Scene {
         this.menuMusic.play();
 
         // play button for 5x5 mode
-        this.playButton = new Phaser.GameObjects.Image(
+        this.play5Button = new Phaser.GameObjects.Image(
             this,
             640,
-            400,
-            "play-button"
+            500,
+            "play-5-button"
         );
-        this.playButton
+        this.play5Button
             .setScale(0.6)
             .setInteractive()
-            .on("pointerdown", this.clickPlay, this);
-        this.add.existing(this.playButton);
+            .on("pointerdown", () => {
+                this.clickPlay("FiveByFiveLevel");
+            });
+        this.add.existing(this.play5Button);
+
+        // play button for 3x3 mode
+        this.play3Button = new Phaser.GameObjects.Image(
+            this,
+            640,
+            300,
+            "play-3-button"
+        );
+        this.play3Button
+            .setScale(0.6)
+            .setInteractive()
+            .on("pointerdown", () => {
+                this.clickPlay("ThreeByThreeLevel");
+            });
+        this.add.existing(this.play3Button);
     }
 
     // run when play button is pressed
-    clickPlay() {
+    //modified so that it accepts scenekey as a paramaeter
+    clickPlay(sceneKey: string) {
         this.sound.play("button-press", { volume: 0.4 });
         this.menuMusic.stop();
-        this.scene.start("FiveByFiveLevel");
+        this.scene.start(sceneKey);
     }
 }

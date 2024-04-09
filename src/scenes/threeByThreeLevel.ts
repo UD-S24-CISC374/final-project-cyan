@@ -4,7 +4,7 @@ import FpsText from "../objects/fpsText";
 import BooleanBlock from "../objects/booleanBlock";
 import ScoreDisplay from "../objects/scoreDisplay";
 
-export default class FiveByFiveLevel extends Phaser.Scene {
+export default class ThreeByThreeLevel extends Phaser.Scene {
     fpsText: FpsText;
     locationBuffer: [number, number] | undefined;
     blockGrid: BlockGrid;
@@ -16,7 +16,7 @@ export default class FiveByFiveLevel extends Phaser.Scene {
     reshuffleButton: Phaser.GameObjects.Text;
 
     constructor() {
-        super({ key: "FiveByFiveLevel" });
+        super({ key: "ThreeByThreeLevel" });
     }
 
     preload() {
@@ -25,7 +25,7 @@ export default class FiveByFiveLevel extends Phaser.Scene {
 
     create() {
         this.timeLimitInSeconds = 120;
-        this.blockGrid = new BlockGrid(this, 5);
+        this.blockGrid = new BlockGrid(this, 3, false); // Initialize a 3x3 grid
         this.fpsText = new FpsText(this);
         this.gameplayMusic = this.sound.add("gameplay-music");
         this.gameplayMusic.play({ volume: 0.3, loop: true });
@@ -163,6 +163,6 @@ export default class FiveByFiveLevel extends Phaser.Scene {
         this.blockGrid.destroy();
 
         // Generate new block grid with random blocks
-        this.blockGrid = new BlockGrid(this, 5);
+        this.blockGrid = new BlockGrid(this, 3, false);
     }
 }

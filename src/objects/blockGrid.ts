@@ -5,10 +5,17 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     blockMatrix: Array<Array<BooleanBlock>>;
     private blockSize: number = 100;
     private blockSpacing: number = 10;
+    private includeNotBlocks: boolean;
 
-    constructor(scene: Phaser.Scene, sideLength: number) {
+    constructor(
+        scene: Phaser.Scene,
+        sideLength: number,
+        includeNotBlocks: boolean = true
+    ) {
         super(scene);
         this.blockMatrix = [];
+        this.includeNotBlocks = includeNotBlocks;
+
         for (let i = 0; i < sideLength; i++) {
             this.blockMatrix.push([]);
             for (let j = 0; j < sideLength; j++) {
@@ -23,7 +30,12 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     }
 
     public createRandomBlock(row: number, col: number): BooleanBlock {
-        let blockList: Array<string> = ["and", "or", "not", "true", "false"];
+        let blockList: Array<string> = ["and", "or", "true", "false"];
+
+        if (this.includeNotBlocks) {
+            blockList.push("not");
+        }
+
         let blockType = blockList[Math.floor(Math.random() * blockList.length)];
         let x = col * (this.blockSize + this.blockSpacing);
         let y = row * (this.blockSize + this.blockSpacing);
