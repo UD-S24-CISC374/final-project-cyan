@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 
 export default class MenuScene extends Phaser.Scene {
-    playButton: Phaser.GameObjects.Image;
-    play3Button: Phaser.GameObjects.Text;
+    play5Button: Phaser.GameObjects.Image;
+    play3Button: Phaser.GameObjects.Image;
     menuMusic: Phaser.Sound.BaseSound;
 
     constructor() {
@@ -17,36 +17,29 @@ export default class MenuScene extends Phaser.Scene {
         this.menuMusic.play();
 
         // play button for 5x5 mode
-        this.playButton = new Phaser.GameObjects.Image(
+        this.play5Button = new Phaser.GameObjects.Image(
             this,
             640,
-            400,
-            "play-button"
+            500,
+            "play-5-button"
         );
-        this.playButton
+        this.play5Button
             .setScale(0.6)
             .setInteractive()
             .on("pointerdown", () => {
                 this.clickPlay("FiveByFiveLevel");
             });
-        this.add.existing(this.playButton);
+        this.add.existing(this.play5Button);
 
-        //play button for 3x3 mode
-        this.play3Button = new Phaser.GameObjects.Text(
+        // play button for 3x3 mode
+        this.play3Button = new Phaser.GameObjects.Image(
             this,
             640,
             300,
-            "Play 3 x 3",
-            {
-                fontFamily: "Arial",
-                fontSize: "48px",
-                color: "#000000",
-                fontStyle: "bold",
-                backgroundColor: "#ffffff",
-            }
+            "play-3-button"
         );
         this.play3Button
-            .setOrigin(0.5)
+            .setScale(0.6)
             .setInteractive()
             .on("pointerdown", () => {
                 this.clickPlay("ThreeByThreeLevel");
