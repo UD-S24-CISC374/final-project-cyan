@@ -165,12 +165,16 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
             (block) =>
                 new Promise<void>((resolve) => {
                     const breakKey = this.getBreakAnimationKey(block);
+                    const horizontalAdjustment = this.includeNotBlocks
+                        ? 350
+                        : 460;
+                    const verticalAdjustment = this.includeNotBlocks ? 80 : 190;
 
                     // Create and play the animation
                     const anim = this.scene.add
                         .sprite(
-                            block.x + this.blockSize / 2 + 350,
-                            block.y + this.blockSize / 2 + 80,
+                            block.x + this.blockSize / 2 + horizontalAdjustment,
+                            block.y + this.blockSize / 2 + verticalAdjustment,
                             breakKey
                         )
                         .setOrigin(0.5, 0.5)
@@ -221,12 +225,16 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
                 new Promise<void>((resolve) => {
                     const block = row[colIndex];
                     const breakKey = this.getBreakAnimationKey(block);
+                    const horizontalAdjustment = this.includeNotBlocks
+                        ? 350
+                        : 460;
+                    const verticalAdjustment = this.includeNotBlocks ? 80 : 190;
 
                     // Create and play the animation
                     const anim = this.scene.add
                         .sprite(
-                            block.x + this.blockSize / 2 + 350, // Adjust the horizontal position
-                            block.y + this.blockSize / 2 + 80, // Adjust the vertical position
+                            block.x + this.blockSize / 2 + horizontalAdjustment, // Adjust the horizontal position
+                            block.y + this.blockSize / 2 + verticalAdjustment, // Adjust the vertical position
                             breakKey
                         )
                         .setOrigin(0.5, 0.5)
