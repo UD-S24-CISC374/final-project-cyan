@@ -6,6 +6,11 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     private blockSize: number = 100;
     private blockSpacing: number = 10;
     private includeNotBlocks: boolean;
+    private operatorCount: number = 0;
+    private trueCreated: number = 0;
+    private falseCreated: number = 0;
+    private operatorCreated: number = 0;
+    private notCreated: number = 0;
 
     constructor(
         scene: Phaser.Scene,
@@ -15,6 +20,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         super(scene);
         this.blockMatrix = [];
         this.includeNotBlocks = includeNotBlocks;
+        this.initBlockCounters(sideLength * sideLength); // Initialize counters based on total blocks
 
         for (let i = 0; i < sideLength; i++) {
             this.blockMatrix.push([]);
@@ -25,23 +31,87 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
             }
         }
         this.recenterGrid();
+        this.updateBlockPositions();
         scene.add.existing(this);
         scene.sound.add("block-break");
     }
 
+    private initBlockCounters(totalBlocks: number): void {
+        let trueCount = Math.ceil(totalBlocks * 0.3); // 30% true
+        let falseCount = trueCount; // Equal number of true and false
+        this.operatorCount = totalBlocks - trueCount - falseCount; // Rest are operators
+        this.trueCreated = 0;
+        this.falseCreated = 0;
+        this.operatorCreated = 0;
+        this.notCreated = 0;
+    }
+
+    // public createRandomBlock(row: number, col: number): BooleanBlock {
+    //     let totalBlocks = this.blockMatrix.length * this.blockMatrix[0].length;
+    //     let trueCount = Math.ceil(totalBlocks * 0.3);
+    //     let falseCount = trueCount;
+
+    //     let blockType: string;
+
+    //     if (this.trueCreated < trueCount) {
+    //         blockType = "true";
+    //         this.trueCreated++;
+    //     } else if (this.falseCreated < falseCount) {
+    //         blockType = "false";
+    //         this.falseCreated++;
+    //     } else {
+    //         blockType = this.randomOperator();
+    //         this.operatorCreated++;
+    //     }
+
+    //     let x = col * (this.blockSize + this.blockSpacing);
+    //     let y = row * (this.blockSize + this.blockSpacing);
+    //     let block = new BooleanBlock(this.scene, x, y, blockType, [row, col]);
+    //     block.setInteractive();
+    //     return block;
+    // }
+
     public createRandomBlock(row: number, col: number): BooleanBlock {
-        let blockList: Array<string> = ["and", "or", "true", "false"];
-
-        if (this.includeNotBlocks) {
-            blockList.push("not");
-        }
-
-        let blockType = blockList[Math.floor(Math.random() * blockList.length)];
+        let blockType = this.determineBlockType();
         let x = col * (this.blockSize + this.blockSpacing);
         let y = row * (this.blockSize + this.blockSpacing);
         let block = new BooleanBlock(this.scene, x, y, blockType, [row, col]);
+
         block.setInteractive();
         return block;
+    }
+
+    private determineBlockType(): string {
+        // Example logic to determine block type based on updated conditions
+        let operators = ["and", "or"];
+        if (this.includeNotBlocks) operators.push("not");
+
+        // Adjust the choice based on dynamic conditions
+        let currentTotalBlocks = this.countTotalBlocks();
+        let desiredTrueBlocks = Math.ceil(currentTotalBlocks * 0.3);
+        if (this.trueCreated < desiredTrueBlocks) {
+            this.trueCreated++;
+            return "true";
+        } else if (this.falseCreated < desiredTrueBlocks) {
+            this.falseCreated++;
+            return "false";
+        } else {
+            this.operatorCreated++;
+            return operators[Math.floor(Math.random() * operators.length)];
+        }
+    }
+
+    private countTotalBlocks(): number {
+        return this.blockMatrix.flat().length;
+    }
+
+    private randomOperator(): string {
+        let operators = ["and", "or"];
+        if (this.includeNotBlocks && this.notCreated < this.operatorCount / 3) {
+            operators.push("not");
+            this.notCreated++;
+        }
+        return operators[Math.floor(Math.random() * operators.length)];
     }
 
     public getBlockAtLocation(index: [number, number]) {
@@ -160,6 +230,9 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     }
 
     public removeRow(rowIndex: number) {
+        this.blockMatrix[rowIndex].forEach((block) => {
+            this.decrementCounterBasedOnType(block.getBlockType());
+        });
         // Collect animations in an array of promises to know when all animations have completed
         const animPromises = this.blockMatrix[rowIndex].map(
             (block) =>
@@ -199,6 +272,21 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
             this.addNewRow();
             this.updateBlockPositions();
         });
+    }
+
+    private decrementCounterBasedOnType(blockType: string) {
+        switch (blockType) {
+            case "true":
+                this.trueCreated--;
+                break;
+            case "false":
+                this.falseCreated--;
+                break;
+            default:
+                this.operatorCreated--;
+                if (blockType === "not") this.notCreated--;
+                break;
+        }
     }
 
     public getBreakAnimationKey(block: BooleanBlock): string {
@@ -272,6 +360,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
             this.blockMatrix[row].push(block);
             this.add(block);
         }
+        this.updateBlockPositions();
     }
 
     public addNewRow() {
@@ -282,6 +371,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
             this.add(block);
         }
         this.blockMatrix.unshift(newRow);
+        this.updateBlockPositions();
     }
 
     public updateBlockPositions() {
