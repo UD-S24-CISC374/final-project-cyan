@@ -12,6 +12,20 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     private operatorCreated: number = 0;
     private notCreated: number = 0;
 
+    private IDEAL_BLOCK_RATIOS_3: { [blockType: string]: number } = {
+        true: 0.3,
+        false: 0.3,
+        and: 0.2,
+        or: 0.2,
+    };
+    private IDEAL_BLOCK_RATIOS_5: { [blockType: string]: number } = {
+        true: 0.3,
+        false: 0.3,
+        and: 0.15,
+        or: 0.15,
+        not: 0.1,
+    };
+
     constructor(
         scene: Phaser.Scene,
         sideLength: number,
@@ -25,7 +39,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         for (let i = 0; i < sideLength; i++) {
             this.blockMatrix.push([]);
             for (let j = 0; j < sideLength; j++) {
-                let block = this.createRandomBlock(i, j);
+                let block = this.createNewBlock(i, j);
                 this.blockMatrix[i].push(block);
                 this.add(block);
             }
@@ -71,7 +85,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     //     return block;
     // }
 
-    public createRandomBlock(row: number, col: number): BooleanBlock {
+    public createNewBlock(row: number, col: number): BooleanBlock {
         let blockType = this.determineBlockType();
         let x = col * (this.blockSize + this.blockSpacing);
         let y = row * (this.blockSize + this.blockSpacing);
@@ -82,23 +96,87 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     }
 
     private determineBlockType(): string {
-        // Example logic to determine block type based on updated conditions
-        let operators = ["and", "or"];
-        if (this.includeNotBlocks) operators.push("not");
-
-        // Adjust the choice based on dynamic conditions
-        let currentTotalBlocks = this.countTotalBlocks();
-        let desiredTrueBlocks = Math.ceil(currentTotalBlocks * 0.3);
-        if (this.trueCreated < desiredTrueBlocks) {
-            this.trueCreated++;
-            return "true";
-        } else if (this.falseCreated < desiredTrueBlocks) {
-            this.falseCreated++;
-            return "false";
+        if (this.includeNotBlocks) {
+            let currentBlockRatios = this.getBlockRatios5();
+            let blockRatioDelta: { [blockType: string]: number } = {
+                true: 0,
+                false: 0,
+                and: 0,
+                or: 0,
+                not: 0,
+            };
+            for (let blockType in currentBlockRatios) {
+                blockRatioDelta[blockType] =
+                    this.IDEAL_BLOCK_RATIOS_5[blockType] -
+                    currentBlockRatios[blockType];
+            }
+            let maxRatioDelta: string = "true";
+            for (let blockType in blockRatioDelta) {
+                if (
+                    blockRatioDelta[blockType] > blockRatioDelta[maxRatioDelta]
+                ) {
+                    maxRatioDelta = blockType;
+                }
+            }
+            return maxRatioDelta;
         } else {
-            this.operatorCreated++;
-            return operators[Math.floor(Math.random() * operators.length)];
+            let currentBlockRatios = this.getBlockRatios3();
+            let blockRatioDelta: { [blockType: string]: number } = {
+                true: 0,
+                false: 0,
+                and: 0,
+                or: 0,
+            };
+            for (let blockType in currentBlockRatios) {
+                blockRatioDelta[blockType] =
+                    this.IDEAL_BLOCK_RATIOS_3[blockType] -
+                    currentBlockRatios[blockType];
+            }
+            let maxRatioDelta: string = "true";
+            for (let blockType in blockRatioDelta) {
+                if (
+                    blockRatioDelta[blockType] > blockRatioDelta[maxRatioDelta]
+                ) {
+                    maxRatioDelta = blockType;
+                }
+            }
+            return maxRatioDelta;
         }
+    }
+
+    private getBlockRatios5(): { [blockType: string]: number } {
+        let blockCounts: { [blockType: string]: number } = {
+            true: 0,
+            false: 0,
+            and: 0,
+            or: 0,
+            not: 0,
+        };
+        let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
+        for (let i = 0; i < blockList.length; i++) {
+            blockCounts[blockList[i].getBlockType()] += 1;
+        }
+        for (let blockType in blockCounts) {
+            blockCounts[blockType] /= blockList.length;
+        }
+        return blockCounts;
+    }
+
+    private getBlockRatios3(): { [blockType: string]: number } {
+        let blockCounts: { [blockType: string]: number } = {
+            true: 0,
+            false: 0,
+            and: 0,
+            or: 0,
+        };
+        let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
+        for (let i = 0; i < blockList.length; i++) {
+            blockCounts[blockList[i].getBlockType()] += 1;
+        }
+        for (let blockType in blockCounts) {
+            blockCounts[blockType] /= blockList.length;
+        }
+        return blockCounts;
     }
 
     private countTotalBlocks(): number {
@@ -353,10 +431,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
 
     public addNewColumn() {
         for (let row = 0; row < this.blockMatrix.length; row++) {
-            let block = this.createRandomBlock(
-                row,
-                this.blockMatrix[row].length
-            );
+            let block = this.createNewBlock(row, this.blockMatrix[row].length);
             this.blockMatrix[row].push(block);
             this.add(block);
         }
@@ -366,7 +441,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     public addNewRow() {
         let newRow: Array<BooleanBlock> = [];
         for (let col = 0; col < this.blockMatrix[0].length; col++) {
-            let block = this.createRandomBlock(0, col);
+            let block = this.createNewBlock(0, col);
             newRow.push(block);
             this.add(block);
         }
