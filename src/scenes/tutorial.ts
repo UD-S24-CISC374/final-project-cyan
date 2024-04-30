@@ -57,6 +57,9 @@
 //     }
 // }
 
+//template for grid
+//move on to five by five after three by three
+
 import Phaser from "phaser";
 import BlockGrid from "../objects/blockGrid";
 import FpsText from "../objects/fpsText";
@@ -70,7 +73,8 @@ export default class TutorialLevel extends Phaser.Scene {
     gameplayMusic: Phaser.Sound.BaseSound;
     scoreDisplay: ScoreDisplay;
     reshuffleButton: Phaser.GameObjects.Text;
-    instructionsText: Phaser.GameObjects.Text;
+    //instructionsText: Phaser.GameObjects.Text;
+    instructionImage: Phaser.GameObjects.Image;
 
     constructor() {
         super({ key: "TutorialLevel" });
@@ -98,17 +102,21 @@ export default class TutorialLevel extends Phaser.Scene {
             .setInteractive();
         this.reshuffleButton.on("pointerdown", this.reshuffleBlocks, this);
 
-        this.instructionsText = this.add
-            .text(
-                50,
-                this.cameras.main.height - 50,
-                "Move a block to get started.",
-                {
-                    fontSize: "18px",
-                    color: "#000000",
-                }
-            )
-            .setOrigin(0, 1);
+        this.instructionImage = this.add
+            .image(225, 600, "instruction-1")
+            .setScale(0.075);
+
+        // this.instructionsText = this.add
+        //     .text(
+        //         50,
+        //         this.cameras.main.height - 50,
+        //         "Move a block to get started.",
+        //         {
+        //             fontSize: "18px",
+        //             color: "#000000",
+        //         }
+        //     )
+        //     .setOrigin(0, 1);
 
         // Create break animations
         this.createBreakAnimations();
@@ -184,10 +192,11 @@ export default class TutorialLevel extends Phaser.Scene {
                 Promise.all(promises).then(() => {
                     const matches: number = this.blockGrid.checkForTruthy();
                     this.scoreDisplay.incrementScore(matches);
+                    this.updateTutorialState();
                 });
             }
         }
-        this.updateTutorialState();
+        //this.updateTutorialState();
     }
 
     update() {
@@ -206,14 +215,12 @@ export default class TutorialLevel extends Phaser.Scene {
         const truthyStatements = this.blockGrid.findTruthyStatements();
 
         if (truthyStatements && truthyStatements.length > 0) {
-            this.instructionsText.setText(
+            this.instructionImage.setTexture(
                 "Great! You've created a true Boolean statement."
             );
             // Add further steps or instructions here if needed.
         } else {
-            this.instructionsText.setText(
-                "Try making a valid Boolean statement."
-            );
+            this.instructionImage.setTexture("instruction-2");
         }
     }
 }

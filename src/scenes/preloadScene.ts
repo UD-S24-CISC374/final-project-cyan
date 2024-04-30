@@ -15,6 +15,9 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image("menu-backplate", "assets/menu/menuBackplate.png");
         this.load.image("play-3-button", "assets/menu/play3Button.png");
         this.load.image("play-5-button", "assets/menu/play5Button.png");
+        this.load.image("tutorial-button", "assets/menu/tutorialButton.png");
+        this.load.image("instruction-1", "assets/tutorial/instruction1.png");
+        this.load.image("instruction-2", "assets/tutorial/instruction2.png");
         this.load.image("play-again-button", "assets/menu/PlayAgainButton.png");
         this.load.audio("button-press", "assets/audio/effects/click.mp3");
         this.load.audio("menu-music", "assets/audio/music/puzzlemenu.ogg");
@@ -63,6 +66,6 @@ export default class PreloadScene extends Phaser.Scene {
     }
 
     create() {
-        this.scene.start("TutorialLevel");
+        this.scene.start("MenuScene");
     }
 }
