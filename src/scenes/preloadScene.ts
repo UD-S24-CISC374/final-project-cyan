@@ -18,6 +18,7 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image("tutorial-button", "assets/menu/tutorialButton.png");
         this.load.image("instruction-1", "assets/tutorial/instruction1.png");
         this.load.image("instruction-2", "assets/tutorial/instruction2.png");
+        this.load.image("instruction-3", "assets/tutorial/instruction3.png");
         this.load.image("play-again-button", "assets/menu/PlayAgainButton.png");
         this.load.audio("button-press", "assets/audio/effects/click.mp3");
         this.load.audio("menu-music", "assets/audio/music/puzzlemenu.ogg");

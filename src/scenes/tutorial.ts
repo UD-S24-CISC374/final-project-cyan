@@ -1,62 +1,3 @@
-// import Phaser from "phaser";
-// import ThreeByThreeLevel from "./threeByThreeLevel";
-
-// export default class TutorialLevel extends ThreeByThreeLevel {
-//     instructionsText: Phaser.GameObjects.Text;
-
-//     constructor() {
-//         super();
-//     }
-
-//     create() {
-//         super.create();
-
-//         this.instructionsText = this.add
-//             .text(
-//                 50,
-//                 this.cameras.main.height - 50,
-//                 "Welcome to the tutorial!",
-//                 {
-//                     fontSize: "18px",
-//                     color: "#000000",
-//                 }
-//             )
-//             .setOrigin(0, 1);
-
-//         this.updateInstructions("Move a block to get started.");
-
-//         // Override the input event handler
-//         this.input.on("pointerdown", this.handlePointerDown, this);
-//     }
-
-//     updateInstructions(newInstruction: string) {
-//         this.instructionsText.setText(newInstruction);
-//     }
-
-//     handlePointerDown(
-//         pointer: Phaser.Input.Pointer,
-//         currentlyOver: Array<Phaser.GameObjects.GameObject>
-//     ) {
-//         super.mouseClick(pointer, currentlyOver);
-
-//         // After a move, update the instructions based on the current state
-//         this.updateTutorialState();
-//     }
-
-//     updateTutorialState() {
-//         const truthyStatements = this.blockGrid.findTruthyStatements();
-
-//         if (truthyStatements && truthyStatements.length > 0) {
-//             this.updateInstructions(
-//                 "Great! You've created a true Boolean statement."
-//             );
-//             // Add further steps or instructions here
-//         } else {
-//             this.updateInstructions("Try making a valid Boolean statement.");
-//         }
-//     }
-// }
-
 //template for grid
 //move on to five by five after three by three
 
@@ -73,8 +14,8 @@ export default class TutorialLevel extends Phaser.Scene {
     gameplayMusic: Phaser.Sound.BaseSound;
     scoreDisplay: ScoreDisplay;
     reshuffleButton: Phaser.GameObjects.Text;
-    //instructionsText: Phaser.GameObjects.Text;
     instructionImage: Phaser.GameObjects.Image;
+    hasMovedBlock: boolean;
 
     constructor() {
         super({ key: "TutorialLevel" });
@@ -103,20 +44,10 @@ export default class TutorialLevel extends Phaser.Scene {
         this.reshuffleButton.on("pointerdown", this.reshuffleBlocks, this);
 
         this.instructionImage = this.add
-            .image(225, 600, "instruction-1")
+            .image(180, 600, "instruction-1")
             .setScale(0.075);
 
-        // this.instructionsText = this.add
-        //     .text(
-        //         50,
-        //         this.cameras.main.height - 50,
-        //         "Move a block to get started.",
-        //         {
-        //             fontSize: "18px",
-        //             color: "#000000",
-        //         }
-        //     )
-        //     .setOrigin(0, 1);
+        this.hasMovedBlock = false;
 
         // Create break animations
         this.createBreakAnimations();
@@ -194,6 +125,10 @@ export default class TutorialLevel extends Phaser.Scene {
                     this.scoreDisplay.incrementScore(matches);
                     this.updateTutorialState();
                 });
+                if (!this.hasMovedBlock) {
+                    this.instructionImage.setTexture("instruction-2");
+                    this.hasMovedBlock = true; // Set flag to true after first movement
+                }
             }
         }
         //this.updateTutorialState();
@@ -215,12 +150,20 @@ export default class TutorialLevel extends Phaser.Scene {
         const truthyStatements = this.blockGrid.findTruthyStatements();
 
         if (truthyStatements && truthyStatements.length > 0) {
-            this.instructionImage.setTexture(
-                "Great! You've created a true Boolean statement."
-            );
-            // Add further steps or instructions here if needed.
-        } else {
-            this.instructionImage.setTexture("instruction-2");
+            const score = this.scoreDisplay.getScore();
+
+            if (score >= 1 && score < 5) {
+                this.instructionImage.setTexture("instruction-3");
+            } else if (score >= 5) {
+                // Remove the current grid
+                this.blockGrid.destroy();
+
+                // Create a new 5x5 grid
+                this.blockGrid = new BlockGrid(this, 5, true);
+
+                // Display a new instructional image
+                //this.instructionImage.setTexture("instruction-4");
+            }
         }
     }
 }
