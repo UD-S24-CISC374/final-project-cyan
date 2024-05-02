@@ -137,6 +137,7 @@ export default class TutorialLevel extends Phaser.Scene {
             if (score >= 1 && score < 5) {
                 this.instructionImage.setTexture("instruction-3");
             } else if (score >= 5) {
+                this.gameplayMusic.stop();
                 this.scene.start("AdvancedTutorial");
             }
         }

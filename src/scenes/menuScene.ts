@@ -27,7 +27,7 @@ export default class MenuScene extends Phaser.Scene {
             .setScale(0.6)
             .setInteractive()
             .on("pointerdown", () => {
-                this.clickPlay("TutorialLevel");
+                this.clickPlay(this.tutorialButton, "TutorialLevel");
             });
         this.add.existing(this.tutorialButton);
 
