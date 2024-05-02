@@ -4,25 +4,28 @@ import FpsText from "../objects/fpsText";
 import BooleanBlock from "../objects/booleanBlock";
 import ScoreDisplay from "../objects/scoreDisplay";
 
-export default class TutorialLevel extends Phaser.Scene {
+export default class AdvancedTutorial extends Phaser.Scene {
     fpsText: FpsText;
     locationBuffer: [number, number] | undefined;
     blockGrid: BlockGrid;
     gameplayMusic: Phaser.Sound.BaseSound;
     scoreDisplay: ScoreDisplay;
     instructionImage: Phaser.GameObjects.Image;
-    hasMovedBlock: boolean;
+    timer: Phaser.Time.TimerEvent;
+    timeLimitInSeconds: number;
+    timerText: Phaser.GameObjects.Text;
 
     constructor() {
-        super({ key: "TutorialLevel" });
+        super({ key: "AdvancedTutorial" });
     }
 
     create() {
-        this.blockGrid = new BlockGrid(this, 3, false); // Initialize a 3x3 grid
+        this.blockGrid = new BlockGrid(this, 5, true); // Initialize a 5x5 grid
         this.fpsText = new FpsText(this);
         this.gameplayMusic = this.sound.add("gameplay-music");
         this.gameplayMusic.play({ volume: 0.3, loop: true });
         this.scoreDisplay = new ScoreDisplay(this, 620, 30);
+        this.timeLimitInSeconds = 10;
 
         this.input.on("pointerdown", this.mouseClick, this);
 
@@ -35,10 +38,20 @@ export default class TutorialLevel extends Phaser.Scene {
             .setOrigin(1, 0);
 
         this.instructionImage = this.add
-            .image(180, 600, "instruction-1")
+            .image(180, 600, "instruction-4")
             .setScale(0.075);
 
-        this.hasMovedBlock = false;
+        this.timerText = this.add
+            .text(
+                this.cameras.main.width - 15,
+                this.cameras.main.height - 15,
+                `Time: ${this.timeLimitInSeconds}`,
+                {
+                    color: "#000000",
+                    fontSize: "24px",
+                }
+            )
+            .setOrigin(1, 1);
 
         // Create break animations
         this.createBreakAnimations();
@@ -116,16 +129,15 @@ export default class TutorialLevel extends Phaser.Scene {
                     this.scoreDisplay.incrementScore(matches);
                     this.updateTutorialState();
                 });
-                if (!this.hasMovedBlock) {
-                    this.instructionImage.setTexture("instruction-2");
-                    this.hasMovedBlock = true; // Set flag to true after first movement
-                }
             }
         }
+        //this.updateTutorialState();
     }
 
     update() {
         this.fpsText.update();
+
+        this.timerText.setText(`Time: ${this.timeLimitInSeconds}`);
     }
 
     updateTutorialState() {
@@ -134,10 +146,23 @@ export default class TutorialLevel extends Phaser.Scene {
         if (truthyStatements && truthyStatements.length > 0) {
             const score = this.scoreDisplay.getScore();
 
-            if (score >= 1 && score < 5) {
-                this.instructionImage.setTexture("instruction-3");
-            } else if (score >= 5) {
-                this.scene.start("AdvancedTutorial");
+            if (score >= 1 && score <= 2) {
+                this.instructionImage.setTexture("instruction-5");
+
+                this.timer = this.time.addEvent({
+                    delay: 1000,
+                    callback: () => {
+                        this.timeLimitInSeconds--;
+                        if (this.timeLimitInSeconds <= 0) {
+                            this.gameplayMusic.stop();
+                            this.scene.start("PostLevelScene", {
+                                finalScore: this.scoreDisplay.getScore(),
+                            });
+                        }
+                    },
+                    callbackScope: this,
+                    loop: true,
+                });
             }
         }
     }

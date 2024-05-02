@@ -5,6 +5,7 @@ import FiveByFiveLevel from "./scenes/fiveByFiveLevel";
 import PostLevelScene from "./scenes/postLevelScene";
 import ThreeByThreeLevel from "./scenes/threeByThreeLevel";
 import TutorialLevel from "./scenes/tutorial";
+import AdvancedTutorial from "./scenes/advancedTutorial";
 
 const DEFAULT_WIDTH = 1280;
 const DEFAULT_HEIGHT = 720;
@@ -28,6 +29,7 @@ export const CONFIG = {
         PostLevelScene,
         ThreeByThreeLevel,
         TutorialLevel,
+        AdvancedTutorial,
     ],
     physics: {
         default: "arcade",
