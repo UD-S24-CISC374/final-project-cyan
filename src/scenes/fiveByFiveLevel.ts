@@ -32,6 +32,8 @@ export default class FiveByFiveLevel extends Phaser.Scene {
 
         this.input.on("pointerdown", this.mouseClick, this);
 
+        this.handleInitialGrid();
+
         const message = `Phaser v${Phaser.VERSION}`;
         this.add
             .text(this.cameras.main.width - 15, 15, message, {
@@ -80,6 +82,13 @@ export default class FiveByFiveLevel extends Phaser.Scene {
 
         // Create break animations
         this.createBreakAnimations();
+    }
+
+    private handleInitialGrid() {
+        let matches = this.blockGrid.checkForTruthy();
+        if (matches > 0) {
+            this.scoreDisplay.incrementScore(matches);
+        }
     }
 
     // Function to create break animations
