@@ -1,11 +1,10 @@
 import Phaser from "phaser";
 import BlockGrid from "../objects/blockGrid";
-import FpsText from "../objects/fpsText";
 import BooleanBlock from "../objects/booleanBlock";
 import ScoreDisplay from "../objects/scoreDisplay";
+import PauseMenu from "../objects/pausemenu";
 
 export default class ThreeByThreeLevel extends Phaser.Scene {
-    fpsText: FpsText;
     locationBuffer: [number, number] | undefined;
     blockGrid: BlockGrid;
     timer: Phaser.Time.TimerEvent;
@@ -13,7 +12,8 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
     timerText: Phaser.GameObjects.Text;
     gameplayMusic: Phaser.Sound.BaseSound;
     scoreDisplay: ScoreDisplay;
-    reshuffleButton: Phaser.GameObjects.Text;
+    pauseButton: Phaser.GameObjects.Image;
+    pauseMenu: PauseMenu;
 
     constructor() {
         super({ key: "ThreeByThreeLevel" });
@@ -26,7 +26,6 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
     create() {
         this.timeLimitInSeconds = 120;
         this.blockGrid = new BlockGrid(this, 3, false); // Initialize a 3x3 grid
-        this.fpsText = new FpsText(this);
         this.gameplayMusic = this.sound.add("gameplay-music");
         this.gameplayMusic.play({ volume: 0.3, loop: true });
         this.scoreDisplay = new ScoreDisplay(this, 620, 30);
@@ -68,10 +67,16 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
             )
             .setOrigin(1, 1);
 
-        this.reshuffleButton = this.add
-            .text(100, 50, "Reshuffle", { color: "#000000" })
-            .setInteractive();
-        this.reshuffleButton.on("pointerdown", this.reshuffleBlocks, this);
+        this.pauseButton = new Phaser.GameObjects.Image(
+            this,
+            50,
+            50,
+            "pause-button"
+        )
+            .setScale(0.1)
+            .setInteractive()
+            .on("pointerdown", this.clickPause, this);
+        this.add.existing(this.pauseButton);
 
         // Create break animations
         this.createBreakAnimations();
@@ -152,17 +157,27 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
         }
     }
 
-    update() {
-        this.fpsText.update();
-
-        this.timerText.setText(`Time: ${this.timeLimitInSeconds}`);
+    clickPause() {
+        this.timer.paused = true;
+        this.pauseMenu = new PauseMenu(
+            this,
+            this.resumeFunc,
+            this.mainMenuFunc
+        );
+        this.add.existing(this.pauseMenu);
     }
 
-    reshuffleBlocks() {
-        // Clear existing block grid
-        this.blockGrid.destroy();
+    mainMenuFunc() {
+        this.gameplayMusic.pause();
+        this.scene.start("MenuScene");
+    }
 
-        // Generate new block grid with random blocks
-        this.blockGrid = new BlockGrid(this, 3, false);
+    resumeFunc() {
+        this.pauseMenu.destroy();
+        this.timer.paused = false;
+    }
+
+    update() {
+        this.timerText.setText(`Time: ${this.timeLimitInSeconds}`);
     }
 }
