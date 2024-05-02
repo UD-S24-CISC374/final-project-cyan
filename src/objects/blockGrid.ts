@@ -112,22 +112,37 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     }
 
     private determineBlockType(): BlockType {
-        let targetRatios: Ratios = this.includeNotBlocks
+        const targetProbabilities: Ratios = this.includeNotBlocks
             ? { true: 0.3, false: 0.3, and: 0.15, or: 0.15, not: 0.1 }
             : { true: 0.3, false: 0.3, and: 0.2, or: 0.2, not: 0 };
-        let ratios = this.getCurrentRatios();
 
-        let minDiff = -Infinity;
-        let chosenType: BlockType = "true"; // Default to 'true', but this will change dynamically
+        const blockTypes = Object.keys(targetProbabilities) as BlockType[];
+        const probabilities = Object.values(targetProbabilities);
 
-        Object.entries(targetRatios).forEach(([type, targetRatio]) => {
-            const currentRatio = ratios[type as BlockType];
-            const diff = targetRatio - currentRatio;
-            if (diff > minDiff) {
-                minDiff = diff;
-                chosenType = type as BlockType;
-            }
+        let totalProbability = 0;
+        const cumulativeProbabilities = probabilities.map((probability) => {
+            totalProbability += probability;
+            return totalProbability;
         });
+
+        const randomValue = Math.random() * totalProbability;
+        let chosenType: BlockType = "true";
+
+        for (let i = 0; i < cumulativeProbabilities.length; i++) {
+            if (randomValue <= cumulativeProbabilities[i]) {
+                chosenType = blockTypes[i];
+                break;
+            }
+        }
+
+        // If NOT blocks are not included and the chosen type is NOT, select a different block type
+        if (!this.includeNotBlocks && chosenType === "not") {
+            const validBlockTypes = blockTypes.filter((type) => type !== "not");
+            chosenType =
+                validBlockTypes[
+                    Math.floor(Math.random() * validBlockTypes.length)
+                ];
+        }
 
         this.updateCounters(chosenType);
         return chosenType;
