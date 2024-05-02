@@ -14,6 +14,7 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
     scoreDisplay: ScoreDisplay;
     pauseButton: Phaser.GameObjects.Image;
     pauseMenu: PauseMenu;
+    paused: boolean;
 
     constructor() {
         super({ key: "ThreeByThreeLevel" });
@@ -24,6 +25,7 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
     }
 
     create() {
+        this.paused = false;
         this.timeLimitInSeconds = 120;
         this.blockGrid = new BlockGrid(this, 3, false); // Initialize a 3x3 grid
         this.gameplayMusic = this.sound.add("gameplay-music");
@@ -167,23 +169,54 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
     }
 
     clickPause() {
-        this.timer.paused = true;
-        this.pauseMenu = new PauseMenu(
-            this,
-            this.resumeFunc,
-            this.mainMenuFunc
-        );
-        this.add.existing(this.pauseMenu);
+        if (!this.paused) {
+            this.paused = true;
+            let promise = new Promise<void>((resolve: () => void) => {
+                this.sound.play("button-press", { volume: 0.4 });
+                this.pauseButton.setScale(0.09);
+                setTimeout(resolve, 200);
+            });
+
+            Promise.resolve(promise).then(() => {
+                this.pauseButton.setScale(0.1);
+                this.timer.paused = true;
+                this.pauseMenu = new PauseMenu(
+                    this,
+                    this.resumeFunc,
+                    this.mainMenuFunc
+                );
+                this.add.existing(this.pauseMenu);
+            });
+        }
     }
 
     mainMenuFunc() {
-        this.gameplayMusic.pause();
-        this.scene.start("MenuScene");
+        let promise = new Promise<void>((resolve: () => void) => {
+            this.sound.play("button-press", { volume: 0.4 });
+            this.pauseMenu.mainMenuButton.setScale(0.9);
+            setTimeout(resolve, 200);
+        });
+
+        Promise.resolve(promise).then(() => {
+            this.pauseMenu.mainMenuButton.setScale(1);
+            this.gameplayMusic.pause();
+            this.scene.start("MenuScene");
+        });
     }
 
     resumeFunc() {
-        this.pauseMenu.destroy();
-        this.timer.paused = false;
+        let promise = new Promise<void>((resolve: () => void) => {
+            this.sound.play("button-press", { volume: 0.4 });
+            this.pauseMenu.resumeButton.setScale(0.9);
+            setTimeout(resolve, 200);
+        });
+
+        Promise.resolve(promise).then(() => {
+            this.pauseMenu.resumeButton.setScale(1);
+            this.pauseMenu.destroy();
+            this.timer.paused = false;
+            this.paused = false;
+        });
     }
 
     update() {

@@ -27,7 +27,7 @@ export default class MenuScene extends Phaser.Scene {
             .setScale(0.6)
             .setInteractive()
             .on("pointerdown", () => {
-                this.clickPlay("TutorialLevel");
+                this.clickPlay(this.tutorialButton, "TutorialLevel");
             });
         this.add.existing(this.tutorialButton);
 
@@ -42,7 +42,7 @@ export default class MenuScene extends Phaser.Scene {
             .setScale(0.6)
             .setInteractive()
             .on("pointerdown", () => {
-                this.clickPlay("FiveByFiveLevel");
+                this.clickPlay(this.play5Button, "FiveByFiveLevel");
             });
         this.add.existing(this.play5Button);
 
@@ -57,16 +57,24 @@ export default class MenuScene extends Phaser.Scene {
             .setScale(0.6)
             .setInteractive()
             .on("pointerdown", () => {
-                this.clickPlay("ThreeByThreeLevel");
+                this.clickPlay(this.play3Button, "ThreeByThreeLevel");
             });
         this.add.existing(this.play3Button);
     }
 
     // run when play button is pressed
     //modified so that it accepts scenekey as a paramaeter
-    clickPlay(sceneKey: string) {
-        this.sound.play("button-press", { volume: 0.4 });
-        this.menuMusic.stop();
-        this.scene.start(sceneKey);
+    clickPlay(button: Phaser.GameObjects.Image, sceneKey: string) {
+        let promise = new Promise<void>((resolve: () => void) => {
+            this.sound.play("button-press", { volume: 0.4 });
+            button.setScale(0.55);
+            setTimeout(resolve, 200);
+        });
+
+        Promise.resolve(promise).then(() => {
+            button.setScale(1);
+            this.menuMusic.stop();
+            this.scene.start(sceneKey);
+        });
     }
 }
