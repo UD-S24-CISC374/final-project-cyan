@@ -1,14 +1,8 @@
 import Phaser from "phaser";
 import BooleanBlock from "./booleanBlock";
 
-type BlockType = "true" | "false" | "and" | "or" | "not";
-
 interface Ratios {
-    true: number;
-    false: number;
-    and: number;
-    or: number;
-    not: number;
+    [index: string]: number;
 }
 
 export default class BlockGrid extends Phaser.GameObjects.Container {
@@ -22,14 +16,14 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     private operatorCreated: number = 0;
     private notCreated: number = 0;
 
-    private IDEAL_BLOCK_RATIOS_3: { [blockType: string]: number } = {
-        true: 0.3,
-        false: 0.3,
-        and: 0.2,
-        or: 0.2,
+    private IDEAL_BLOCK_RATIOS_3: Ratios = {
+        true: 0.2,
+        false: 0.2,
+        and: 0.3,
+        or: 0.3,
         not: 0,
     };
-    private IDEAL_BLOCK_RATIOS_5: { [blockType: string]: number } = {
+    private IDEAL_BLOCK_RATIOS_5: Ratios = {
         true: 0.3,
         false: 0.3,
         and: 0.15,
@@ -72,31 +66,6 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         this.notCreated = 0;
     }
 
-    // public createRandomBlock(row: number, col: number): BooleanBlock {
-    //     let totalBlocks = this.blockMatrix.length * this.blockMatrix[0].length;
-    //     let trueCount = Math.ceil(totalBlocks * 0.3);
-    //     let falseCount = trueCount;
-
-    //     let blockType: string;
-
-    //     if (this.trueCreated < trueCount) {
-    //         blockType = "true";
-    //         this.trueCreated++;
-    //     } else if (this.falseCreated < falseCount) {
-    //         blockType = "false";
-    //         this.falseCreated++;
-    //     } else {
-    //         blockType = this.randomOperator();
-    //         this.operatorCreated++;
-    //     }
-
-    //     let x = col * (this.blockSize + this.blockSpacing);
-    //     let y = row * (this.blockSize + this.blockSpacing);
-    //     let block = new BooleanBlock(this.scene, x, y, blockType, [row, col]);
-    //     block.setInteractive();
-    //     return block;
-    // }
-
     public createNewBlock(
         row: number,
         col: number,
@@ -111,43 +80,6 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         return block;
     }
 
-    private determineBlockType(): BlockType {
-        const targetProbabilities: Ratios = this.includeNotBlocks
-            ? { true: 0.3, false: 0.3, and: 0.15, or: 0.15, not: 0.1 }
-            : { true: 0.3, false: 0.3, and: 0.2, or: 0.2, not: 0 };
-
-        const blockTypes = Object.keys(targetProbabilities) as BlockType[];
-        const probabilities = Object.values(targetProbabilities);
-
-        let totalProbability = 0;
-        const cumulativeProbabilities = probabilities.map((probability) => {
-            totalProbability += probability;
-            return totalProbability;
-        });
-
-        const randomValue = Math.random() * totalProbability;
-        let chosenType: BlockType = "true";
-
-        for (let i = 0; i < cumulativeProbabilities.length; i++) {
-            if (randomValue <= cumulativeProbabilities[i]) {
-                chosenType = blockTypes[i];
-                break;
-            }
-        }
-
-        // If NOT blocks are not included and the chosen type is NOT, select a different block type
-        if (!this.includeNotBlocks && chosenType === "not") {
-            const validBlockTypes = blockTypes.filter((type) => type !== "not");
-            chosenType =
-                validBlockTypes[
-                    Math.floor(Math.random() * validBlockTypes.length)
-                ];
-        }
-
-        this.updateCounters(chosenType);
-        return chosenType;
-    }
-
     private getCurrentRatios(): Ratios {
         const totalBlocks = this.countTotalBlocks();
         return {
@@ -159,28 +91,9 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         };
     }
 
-    private updateCounters(chosenType: BlockType) {
-        switch (chosenType) {
-            case "true":
-                this.trueCreated++;
-                break;
-            case "false":
-                this.falseCreated++;
-                break;
-            case "and":
-            case "or":
-                this.operatorCreated++;
-                break;
-            case "not":
-                this.notCreated++;
-                break;
-        }
-    }
-
-    /*
     private determineBlockType(): string {
         if (this.includeNotBlocks) {
-            let currentBlockRatios = this.getBlockRatios5();
+            let currentBlockRatios = this.getBlockRatios();
             let blockRatioDelta: { [blockType: string]: number } = {
                 true: 0,
                 false: 0,
@@ -203,7 +116,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
             }
             return maxRatioDelta;
         } else {
-            let currentBlockRatios = this.getBlockRatios3();
+            let currentBlockRatios = this.getBlockRatios();
             let blockRatioDelta: { [blockType: string]: number } = {
                 true: 0,
                 false: 0,
@@ -226,40 +139,40 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
             return maxRatioDelta;
         }
     }
-    */
-    private getBlockRatios5(): { [blockType: string]: number } {
-        let blockCounts: { [blockType: string]: number } = {
-            true: 0,
-            false: 0,
-            and: 0,
-            or: 0,
-            not: 0,
-        };
-        let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
-        for (let i = 0; i < blockList.length; i++) {
-            blockCounts[blockList[i].getBlockType()] += 1;
-        }
-        for (let blockType in blockCounts) {
-            blockCounts[blockType] /= blockList.length;
-        }
-        return blockCounts;
-    }
 
-    private getBlockRatios3(): { [blockType: string]: number } {
-        let blockCounts: { [blockType: string]: number } = {
-            true: 0,
-            false: 0,
-            and: 0,
-            or: 0,
-        };
-        let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
-        for (let i = 0; i < blockList.length; i++) {
-            blockCounts[blockList[i].getBlockType()] += 1;
+    private getBlockRatios(): { [blockType: string]: number } {
+        if (this.includeNotBlocks) {
+            let blockCounts: { [blockType: string]: number } = {
+                true: 0,
+                false: 0,
+                and: 0,
+                or: 0,
+                not: 0,
+            };
+            let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
+            for (let i = 0; i < blockList.length; i++) {
+                blockCounts[blockList[i].getBlockType()] += 1;
+            }
+            for (let blockType in blockCounts) {
+                blockCounts[blockType] /= blockList.length;
+            }
+            return blockCounts;
+        } else {
+            let blockCounts: { [blockType: string]: number } = {
+                true: 0,
+                false: 0,
+                and: 0,
+                or: 0,
+            };
+            let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
+            for (let i = 0; i < blockList.length; i++) {
+                blockCounts[blockList[i].getBlockType()] += 1;
+            }
+            for (let blockType in blockCounts) {
+                blockCounts[blockType] /= blockList.length;
+            }
+            return blockCounts;
         }
-        for (let blockType in blockCounts) {
-            blockCounts[blockType] /= blockList.length;
-        }
-        return blockCounts;
     }
 
     private countTotalBlocks(): number {
@@ -371,11 +284,11 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         if (foundTruthy && foundTruthy.length > 0) {
             for (const statement of foundTruthy) {
                 if (statement.type === "row") {
+                    this.scene.sound.play("block-break", { volume: 0.6 });
                     this.removeRow(statement.index);
-                    this.scene.sound.play("block-break", { volume: 0.6 });
                 } else {
-                    this.removeColumn(statement.index);
                     this.scene.sound.play("block-break", { volume: 0.6 });
+                    this.removeColumn(statement.index);
                 }
                 hasUpdated = true;
             }
@@ -528,15 +441,13 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
 
     public addNewRow() {
         let newRow: Array<BooleanBlock> = [];
-        let cols = this.blockMatrix[0].length;
-        let newRowIdx = this.blockMatrix.length;
-        for (let col = 0; col < cols; col++) {
+        this.blockMatrix.unshift(newRow);
+        for (let col = 0; col < this.blockMatrix.length; col++) {
             let blockType = this.determineBlockType();
-            let block = this.createNewBlock(newRowIdx, col, blockType);
-            newRow.push(block);
+            let block = this.createNewBlock(0, col, blockType);
+            this.blockMatrix[0].push(block);
             this.add(block);
         }
-        this.blockMatrix.unshift(newRow);
         this.updateBlockPositions();
     }
 
