@@ -6,7 +6,7 @@ interface Ratios {
 }
 
 export default class BlockGrid extends Phaser.GameObjects.Container {
-    blockMatrix: Array<Array<BooleanBlock>>;
+    blockMatrix: Array<Array<BooleanBlock | null>>;
     private blockSize: number = 100;
     private blockSpacing: number = 10;
     private includeNotBlocks: boolean;
@@ -150,12 +150,18 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
                 or: 0,
                 not: 0,
             };
-            let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
-            for (let i = 0; i < blockList.length; i++) {
-                blockCounts[blockList[i].getBlockType()] += 1;
+            let nonNullIndexes: number = 0;
+            for (let i = 0; i < this.blockMatrix.length; i++) {
+                for (let j = 0; j < this.blockMatrix.length; j++) {
+                    if (this.blockMatrix[i][j] != null) {
+                        const block = this.blockMatrix[i][j] as BooleanBlock;
+                        blockCounts[block.getBlockType()] += 1;
+                        nonNullIndexes += 1;
+                    }
+                }
             }
             for (let blockType in blockCounts) {
-                blockCounts[blockType] /= blockList.length;
+                blockCounts[blockType] /= nonNullIndexes;
             }
             return blockCounts;
         } else {
@@ -165,12 +171,18 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
                 and: 0,
                 or: 0,
             };
-            let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
-            for (let i = 0; i < blockList.length; i++) {
-                blockCounts[blockList[i].getBlockType()] += 1;
+            let nonNullIndexes: number = 0;
+            for (let i = 0; i < this.blockMatrix.length; i++) {
+                for (let j = 0; j < this.blockMatrix.length; j++) {
+                    if (this.blockMatrix[i][j] != null) {
+                        const block = this.blockMatrix[i][j] as BooleanBlock;
+                        blockCounts[block.getBlockType()] += 1;
+                        nonNullIndexes += 1;
+                    }
+                }
             }
             for (let blockType in blockCounts) {
-                blockCounts[blockType] /= blockList.length;
+                blockCounts[blockType] /= nonNullIndexes;
             }
             return blockCounts;
         }
@@ -197,8 +209,8 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         indexA: [number, number],
         indexB: [number, number]
     ): Array<Promise<void>> {
-        let blockA = this.blockMatrix[indexA[0]][indexA[1]];
-        let blockB = this.blockMatrix[indexB[0]][indexB[1]];
+        let blockA = this.blockMatrix[indexA[0]][indexA[1]] as BooleanBlock;
+        let blockB = this.blockMatrix[indexB[0]][indexB[1]] as BooleanBlock;
         blockA.setGridLocation(indexB);
         blockB.setGridLocation(indexA);
         this.blockMatrix[indexA[0]][indexA[1]] = blockB;
@@ -229,26 +241,25 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     }
 
     public evaluateBooleanExpression(blocks: Array<BooleanBlock>): boolean {
-        let expression = blocks
-            .map((block) => {
-                switch (block.getBlockType()) {
-                    case "and":
-                        return "&&";
-                    case "or":
-                        return "||";
-                    case "not":
-                        return "!";
-                    case "true":
-                        return "true";
-                    case "false":
-                        return "false";
-                    default:
-                        return "";
-                }
-            })
-            .join(" ");
-
         try {
+            let expression = blocks
+                .map((block) => {
+                    switch (block.getBlockType()) {
+                        case "and":
+                            return "&&";
+                        case "or":
+                            return "||";
+                        case "not":
+                            return "!";
+                        case "true":
+                            return "true";
+                        case "false":
+                            return "false";
+                        default:
+                            return "";
+                    }
+                })
+                .join(" ");
             return eval(expression) as boolean;
         } catch (error) {
             return false;
@@ -261,14 +272,22 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     }> {
         let outArray: Array<{ type: "row" | "column"; index: number }> = [];
         for (let row = 0; row < this.blockMatrix.length; row++) {
-            if (this.evaluateBooleanExpression(this.blockMatrix[row])) {
+            if (
+                this.evaluateBooleanExpression(
+                    this.blockMatrix[row] as Array<BooleanBlock>
+                )
+            ) {
                 outArray.push({ type: "row", index: row });
             }
         }
 
         for (let col = 0; col < this.blockMatrix.length; col++) {
             let columnBlocks = this.blockMatrix.map((row) => row[col]);
-            if (this.evaluateBooleanExpression(columnBlocks)) {
+            if (
+                this.evaluateBooleanExpression(
+                    columnBlocks as Array<BooleanBlock>
+                )
+            ) {
                 outArray.push({ type: "column", index: col });
             }
         }
@@ -280,21 +299,111 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         let foundTruthy = this.findTruthyStatements();
         if (foundTruthy.length > 0) {
             let indexesToBreak = this.getIndexesToBreak(foundTruthy);
-            let animPromises: Promise<void>[] = [];
+            let breakingTweenPromises: Promise<void>[] = [];
 
             this.scene.sound.play("block-break");
             for (let i = 0; i < indexesToBreak.length; i++) {
-                animPromises.push(this.breakBlockAtIndex(indexesToBreak[i]));
+                breakingTweenPromises.push(
+                    this.breakBlockAtIndex(indexesToBreak[i])
+                );
             }
-            Promise.all(animPromises).then(() => {
-                for (let i = 0; i < indexesToBreak.length; i++) {
-                    this.replaceBlockAtIndex(indexesToBreak[i]);
-                }
+            Promise.all(breakingTweenPromises).then(() => {
+                this.fallRemainingGridPositions();
+                let fallingTweenPromises: Promise<void>[] =
+                    this.moveToCorrectBlockPositions();
+                Promise.all(fallingTweenPromises).then(() => {
+                    this.fillEmptyMatrixPositions();
+                });
             });
             // returns number of truthy statements found
             return indexesToBreak.length;
         }
         return 0;
+    }
+
+    private async fillEmptyMatrixPositions() {
+        for (let i = 0; i < this.blockMatrix.length; i++) {
+            for (let j = 0; j < this.blockMatrix.length; j++) {
+                if (this.blockMatrix[i][j] == null) {
+                    const block = this.createNewBlock(i, j);
+                    this.blockMatrix[i][j] = block;
+                    this.add(block);
+                }
+            }
+        }
+    }
+
+    private async fallRemainingGridPositions() {
+        for (let i = this.blockMatrix.length - 2; i >= 0; i--) {
+            for (let j = 0; j < this.blockMatrix.length; j++) {
+                if (
+                    this.blockMatrix[i][j] != null &&
+                    this.blockMatrix[i + 1][j] == null
+                ) {
+                    let block: BooleanBlock = this.blockMatrix[i][
+                        j
+                    ] as BooleanBlock;
+                    block.setGridLocation([i + 1, j]);
+                    this.blockMatrix[i + 1][j] = block;
+                    this.blockMatrix[i][j] = null;
+                }
+            }
+        }
+    }
+
+    private moveToCorrectBlockPositions(): Promise<void>[] {
+        let promises: Promise<void>[] = [];
+        for (let i = 0; i < this.blockMatrix.length; i++) {
+            for (let j = 0; j < this.blockMatrix.length; j++) {
+                if (this.blockMatrix[i][j] != null) {
+                    let block: BooleanBlock = this.blockMatrix[i][
+                        j
+                    ] as BooleanBlock;
+                    const correctCorrdinates = this.getCorrectCoordinates([
+                        i,
+                        j,
+                    ]);
+                    if (
+                        block.x != correctCorrdinates[0] ||
+                        block.y != correctCorrdinates[1]
+                    ) {
+                        promises.push(
+                            this.moveBlockToCoordinates(
+                                block,
+                                correctCorrdinates[0],
+                                correctCorrdinates[1]
+                            )
+                        );
+                    }
+                }
+            }
+        }
+        return promises;
+    }
+
+    private async moveBlockToCoordinates(
+        block: BooleanBlock,
+        x: number,
+        y: number
+    ): Promise<void> {
+        let promise = new Promise<void>((resolve: () => void) => {
+            this.scene.tweens.add({
+                targets: block,
+                x: x,
+                y: y,
+                ease: "Linear",
+                duration: 300,
+                onComplete: resolve,
+            });
+        });
+        return promise;
+    }
+
+    private getCorrectCoordinates(ind: [number, number]): [number, number] {
+        return [
+            ind[1] * (this.blockSize + this.blockSpacing),
+            ind[0] * (this.blockSize + this.blockSpacing),
+        ];
     }
 
     private replaceBlockAtIndex(ind: [number, number]) {
@@ -305,7 +414,9 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     }
 
     private breakBlockAtIndex(ind: [number, number]): Promise<void> {
-        let block: BooleanBlock = this.blockMatrix[ind[0]][ind[1]];
+        let block: BooleanBlock = this.blockMatrix[ind[0]][
+            ind[1]
+        ] as BooleanBlock;
         const animPromise = new Promise<void>((resolve) => {
             const breakKey = this.getBreakAnimationKey(block);
             const horizontalAdjustment = this.includeNotBlocks ? 350 : 460;
@@ -330,6 +441,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
 
             // Destroy the block immediately (consider destroying after animation if needed)
             block.destroy();
+            this.blockMatrix[ind[0]][ind[1]] = null;
         });
 
         return animPromise;
@@ -407,7 +519,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     public updateBlockPositions() {
         for (let row = 0; row < this.blockMatrix.length; row++) {
             for (let col = 0; col < this.blockMatrix[row].length; col++) {
-                let block = this.blockMatrix[row][col];
+                let block = this.blockMatrix[row][col] as BooleanBlock;
                 block.x = col * (this.blockSize + this.blockSpacing);
                 block.y = row * (this.blockSize + this.blockSpacing);
                 block.setGridLocation([row, col]);

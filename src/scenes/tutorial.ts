@@ -121,10 +121,6 @@ export default class TutorialLevel extends Phaser.Scene {
                     this.scoreDisplay.incrementScore(matches);
                     this.updateTutorialState();
                 });
-                if (!this.hasMovedBlock) {
-                    this.instructionImage.setTexture("instruction-2");
-                    this.hasMovedBlock = true; // Set flag to true after first movement
-                }
             }
         }
     }
@@ -132,17 +128,17 @@ export default class TutorialLevel extends Phaser.Scene {
     update() {}
 
     updateTutorialState() {
-        const truthyStatements = this.blockGrid.findTruthyStatements();
+        if (!this.hasMovedBlock) {
+            this.instructionImage.setTexture("instruction-2");
+            this.hasMovedBlock = true; // Set flag to true after first movement
+        }
+        const score = this.scoreDisplay.getScore();
 
-        if (truthyStatements.length > 0) {
-            const score = this.scoreDisplay.getScore();
-
-            if (score >= 1 && score < 12) {
-                this.instructionImage.setTexture("instruction-3");
-            } else if (score >= 12) {
-                this.gameplayMusic.stop();
-                this.scene.start("AdvancedTutorial");
-            }
+        if (score >= 1 && score < 12) {
+            this.instructionImage.setTexture("instruction-3");
+        } else if (score >= 12) {
+            this.gameplayMusic.stop();
+            this.scene.start("AdvancedTutorial");
         }
     }
 }
