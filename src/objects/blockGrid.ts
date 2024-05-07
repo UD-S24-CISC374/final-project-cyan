@@ -44,8 +44,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         for (let i = 0; i < sideLength; i++) {
             this.blockMatrix.push([]);
             for (let j = 0; j < sideLength; j++) {
-                let blockType = this.determineBlockType();
-                let block = this.createNewBlock(i, j, blockType);
+                let block = this.createNewBlock(i, j);
                 this.blockMatrix[i].push(block);
                 this.add(block);
             }
@@ -66,15 +65,17 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         this.notCreated = 0;
     }
 
-    public createNewBlock(
-        row: number,
-        col: number,
-        blockType: string
-    ): BooleanBlock {
+    public createNewBlock(row: number, col: number): BooleanBlock {
         // let blockType = this.determineBlockType();
         let x = col * (this.blockSize + this.blockSpacing);
         let y = row * (this.blockSize + this.blockSpacing);
-        let block = new BooleanBlock(this.scene, x, y, blockType, [row, col]);
+        let block = new BooleanBlock(
+            this.scene,
+            x,
+            y,
+            this.determineBlockType(),
+            [row, col]
+        );
 
         block.setInteractive();
         return block;

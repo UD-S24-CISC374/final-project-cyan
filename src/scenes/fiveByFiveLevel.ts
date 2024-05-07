@@ -34,8 +34,6 @@ export default class FiveByFiveLevel extends Phaser.Scene {
 
         this.input.on("pointerdown", this.mouseClick, this);
 
-        this.handleInitialGrid();
-
         const message = `Phaser v${Phaser.VERSION}`;
         this.add
             .text(this.cameras.main.width - 15, 15, message, {
