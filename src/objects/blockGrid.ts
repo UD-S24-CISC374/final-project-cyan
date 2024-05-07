@@ -97,7 +97,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
 
     private determineBlockType(): string {
         if (this.includeNotBlocks) {
-            let currentBlockRatios = this.getBlockRatios5();
+            let currentBlockRatios = this.getBlockRatios();
             let blockRatioDelta: { [blockType: string]: number } = {
                 true: 0,
                 false: 0,
@@ -120,7 +120,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
             }
             return maxRatioDelta;
         } else {
-            let currentBlockRatios = this.getBlockRatios3();
+            let currentBlockRatios = this.getBlockRatios();
             let blockRatioDelta: { [blockType: string]: number } = {
                 true: 0,
                 false: 0,
@@ -144,39 +144,39 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         }
     }
 
-    private getBlockRatios5(): { [blockType: string]: number } {
-        let blockCounts: { [blockType: string]: number } = {
-            true: 0,
-            false: 0,
-            and: 0,
-            or: 0,
-            not: 0,
-        };
-        let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
-        for (let i = 0; i < blockList.length; i++) {
-            blockCounts[blockList[i].getBlockType()] += 1;
+    private getBlockRatios(): { [blockType: string]: number } {
+        if (this.includeNotBlocks) {
+            let blockCounts: { [blockType: string]: number } = {
+                true: 0,
+                false: 0,
+                and: 0,
+                or: 0,
+                not: 0,
+            };
+            let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
+            for (let i = 0; i < blockList.length; i++) {
+                blockCounts[blockList[i].getBlockType()] += 1;
+            }
+            for (let blockType in blockCounts) {
+                blockCounts[blockType] /= blockList.length;
+            }
+            return blockCounts;
+        } else {
+            let blockCounts: { [blockType: string]: number } = {
+                true: 0,
+                false: 0,
+                and: 0,
+                or: 0,
+            };
+            let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
+            for (let i = 0; i < blockList.length; i++) {
+                blockCounts[blockList[i].getBlockType()] += 1;
+            }
+            for (let blockType in blockCounts) {
+                blockCounts[blockType] /= blockList.length;
+            }
+            return blockCounts;
         }
-        for (let blockType in blockCounts) {
-            blockCounts[blockType] /= blockList.length;
-        }
-        return blockCounts;
-    }
-
-    private getBlockRatios3(): { [blockType: string]: number } {
-        let blockCounts: { [blockType: string]: number } = {
-            true: 0,
-            false: 0,
-            and: 0,
-            or: 0,
-        };
-        let blockList: Array<BooleanBlock> = this.blockMatrix.flat();
-        for (let i = 0; i < blockList.length; i++) {
-            blockCounts[blockList[i].getBlockType()] += 1;
-        }
-        for (let blockType in blockCounts) {
-            blockCounts[blockType] /= blockList.length;
-        }
-        return blockCounts;
     }
 
     private countTotalBlocks(): number {
@@ -261,11 +261,10 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     public findTruthyStatements(): Array<{
         type: "row" | "column";
         index: number;
-    }> | null {
+    }> {
         let outArray: Array<{ type: "row" | "column"; index: number }> = [];
         for (let row = 0; row < this.blockMatrix.length; row++) {
             if (this.evaluateBooleanExpression(this.blockMatrix[row])) {
-                console.log(`Truthy statement found in row ${row}`);
                 outArray.push({ type: "row", index: row });
             }
         }
@@ -273,7 +272,6 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         for (let col = 0; col < this.blockMatrix.length; col++) {
             let columnBlocks = this.blockMatrix.map((row) => row[col]);
             if (this.evaluateBooleanExpression(columnBlocks)) {
-                console.log(`Truthy statement found in column ${col}`);
                 outArray.push({ type: "column", index: col });
             }
         }
@@ -283,73 +281,98 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
 
     public checkForTruthy(): number {
         let foundTruthy = this.findTruthyStatements();
-        let hasUpdated = false;
+        if (foundTruthy.length > 0) {
+            let indexesToBreak = this.getIndexesToBreak(foundTruthy);
+            let animPromises: Promise<void>[] = [];
 
-        if (foundTruthy && foundTruthy.length > 0) {
-            for (const statement of foundTruthy) {
-                if (statement.type === "row") {
-                    this.removeRow(statement.index);
-                    this.scene.sound.play("block-break", { volume: 0.6 });
-                } else {
-                    this.removeColumn(statement.index);
-                    this.scene.sound.play("block-break", { volume: 0.6 });
+            this.scene.sound.play("block-break");
+            for (let i = 0; i < indexesToBreak.length; i++) {
+                animPromises.push(this.breakBlockAtIndex(indexesToBreak[i]));
+            }
+            Promise.all(animPromises).then(() => {
+                for (let i = 0; i < indexesToBreak.length; i++) {
+                    this.replaceBlockAtIndex(indexesToBreak[i]);
                 }
-                hasUpdated = true;
-            }
-            if (hasUpdated) {
-                this.updateBlockPositions();
-            }
-        }
-        // returns number of truthy statements found
-        if (foundTruthy instanceof Array) {
-            return foundTruthy.length;
+            });
+            // returns number of truthy statements found
+            return indexesToBreak.length;
         }
         return 0;
     }
 
-    public removeRow(rowIndex: number) {
-        this.blockMatrix[rowIndex].forEach((block) => {
-            this.decrementCounterBasedOnType(block.getBlockType());
+    private replaceBlockAtIndex(ind: [number, number]) {
+        const newBlock: BooleanBlock = this.createNewBlock(ind[0], ind[1]);
+        this.blockMatrix[ind[0]][ind[1]] = newBlock;
+        this.add(newBlock);
+        this.updateBlockPositions();
+    }
+
+    private breakBlockAtIndex(ind: [number, number]): Promise<void> {
+        let block: BooleanBlock = this.blockMatrix[ind[0]][ind[1]];
+        const animPromise = new Promise<void>((resolve) => {
+            const breakKey = this.getBreakAnimationKey(block);
+            const horizontalAdjustment = this.includeNotBlocks ? 350 : 460;
+            const verticalAdjustment = this.includeNotBlocks ? 80 : 190;
+
+            // Create and play the animation
+            const anim = this.scene.add
+                .sprite(
+                    block.x + this.blockSize / 2 + horizontalAdjustment,
+                    block.y + this.blockSize / 2 + verticalAdjustment,
+                    breakKey
+                )
+                .setOrigin(0.5, 0.5)
+                .setDepth(10);
+
+            anim.play(breakKey);
+            anim.on("animationcomplete", () => {
+                // When animation completes, destroy the sprite and resolve the promise
+                anim.destroy();
+                resolve();
+            });
+
+            // Destroy the block immediately (consider destroying after animation if needed)
+            block.destroy();
         });
-        // Collect animations in an array of promises to know when all animations have completed
-        const animPromises = this.blockMatrix[rowIndex].map(
-            (block) =>
-                new Promise<void>((resolve) => {
-                    const breakKey = this.getBreakAnimationKey(block);
-                    const horizontalAdjustment = this.includeNotBlocks
-                        ? 350
-                        : 460;
-                    const verticalAdjustment = this.includeNotBlocks ? 80 : 190;
 
-                    // Create and play the animation
-                    const anim = this.scene.add
-                        .sprite(
-                            block.x + this.blockSize / 2 + horizontalAdjustment,
-                            block.y + this.blockSize / 2 + verticalAdjustment,
-                            breakKey
-                        )
-                        .setOrigin(0.5, 0.5)
-                        .setDepth(10);
+        return animPromise;
+    }
 
-                    anim.play(breakKey);
-                    anim.on("animationcomplete", () => {
-                        // When animation completes, destroy the sprite and resolve the promise
-                        anim.destroy();
-                        resolve();
-                    });
+    private getIndexesToBreak(
+        truthyStatements: Array<{
+            type: "row" | "column";
+            index: number;
+        }>
+    ): Array<[number, number]> {
+        let out: Array<[number, number]> = [];
+        for (let i = 0; i < truthyStatements.length; i++) {
+            if (truthyStatements[i].type == "row") {
+                for (let j = 0; j < this.blockMatrix.length; j++) {
+                    if (!this.checkIfIn([truthyStatements[i].index, j], out)) {
+                        out.push([truthyStatements[i].index, j]);
+                    }
+                }
+            } else {
+                for (let j = 0; j < this.blockMatrix.length; j++) {
+                    if (!this.checkIfIn([j, truthyStatements[i].index], out)) {
+                        out.push([j, truthyStatements[i].index]);
+                    }
+                }
+            }
+        }
+        return out;
+    }
 
-                    // Destroy the block immediately (consider destroying after animation if needed)
-                    block.destroy();
-                })
-        );
-
-        // When all animations are completed, perform clean up
-        Promise.all(animPromises).then(() => {
-            // Remove the blocks from the grid and adjust the grid accordingly
-            this.blockMatrix.splice(rowIndex, 1);
-            this.addNewRow();
-            this.updateBlockPositions();
-        });
+    private checkIfIn(
+        index: [number, number],
+        array: Array<[number, number]>
+    ): boolean {
+        for (let i = 0; i < array.length; i++) {
+            if (array[i][0] == index[0] && array[i][1] == index[1]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private decrementCounterBasedOnType(blockType: string) {
@@ -382,71 +405,6 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
             default:
                 throw new Error(`Unknown block type: ${block.getBlockType()}`);
         }
-    }
-
-    public removeColumn(colIndex: number) {
-        // Collect animations in an array of promises to know when all animations have completed
-        const animPromises = this.blockMatrix.map(
-            (row) =>
-                new Promise<void>((resolve) => {
-                    const block = row[colIndex];
-                    const breakKey = this.getBreakAnimationKey(block);
-                    const horizontalAdjustment = this.includeNotBlocks
-                        ? 350
-                        : 460;
-                    const verticalAdjustment = this.includeNotBlocks ? 80 : 190;
-
-                    // Create and play the animation
-                    const anim = this.scene.add
-                        .sprite(
-                            block.x + this.blockSize / 2 + horizontalAdjustment, // Adjust the horizontal position
-                            block.y + this.blockSize / 2 + verticalAdjustment, // Adjust the vertical position
-                            breakKey
-                        )
-                        .setOrigin(0.5, 0.5)
-                        .setDepth(10);
-
-                    anim.play(breakKey);
-                    anim.on("animationcomplete", () => {
-                        // When animation completes, destroy the sprite and resolve the promise
-                        anim.destroy();
-                        resolve();
-                    });
-
-                    // Destroy the block immediately (consider destroying after animation if needed)
-                    block.destroy();
-                })
-        );
-
-        // When all animations are completed, perform clean up
-        Promise.all(animPromises).then(() => {
-            // Remove the blocks from the grid and adjust the grid accordingly
-            for (let i = 0; i < this.blockMatrix.length; i++) {
-                this.blockMatrix[i].splice(colIndex, 1);
-            }
-            this.addNewColumn();
-            this.updateBlockPositions();
-        });
-    }
-
-    public addNewColumn() {
-        for (let row = 0; row < this.blockMatrix.length; row++) {
-            let block = this.createNewBlock(row, this.blockMatrix[row].length);
-            this.blockMatrix[row].push(block);
-            this.add(block);
-        }
-        this.updateBlockPositions();
-    }
-
-    public addNewRow() {
-        let newRow: Array<BooleanBlock> = [];
-        for (let col = 0; col < this.blockMatrix[0].length; col++) {
-            let block = this.createNewBlock(0, col);
-            newRow.push(block);
-            this.add(block);
-        }
-        this.blockMatrix.unshift(newRow);
-        this.updateBlockPositions();
     }
 
     public updateBlockPositions() {
