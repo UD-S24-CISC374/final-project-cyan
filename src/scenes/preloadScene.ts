@@ -71,7 +71,60 @@ export default class PreloadScene extends Phaser.Scene {
         );
     }
 
+    // Function to create break animations
+    private createBreakAnimations() {
+        const breakConfig = {
+            frameRate: 10,
+            repeat: 0,
+            hideOnComplete: true,
+        };
+
+        // Animation creation for each color
+        this.anims.create({
+            key: "greenBreak",
+            frames: this.anims.generateFrameNumbers("green-break", {
+                start: 0,
+                end: 4,
+            }),
+            ...breakConfig,
+        });
+        // Repeat for other colors
+        this.anims.create({
+            key: "redBreak",
+            frames: this.anims.generateFrameNumbers("red-break", {
+                start: 0,
+                end: 4,
+            }),
+            ...breakConfig,
+        });
+        this.anims.create({
+            key: "yellowBreak",
+            frames: this.anims.generateFrameNumbers("yellow-break", {
+                start: 0,
+                end: 4,
+            }),
+            ...breakConfig,
+        });
+        this.anims.create({
+            key: "blueBreak",
+            frames: this.anims.generateFrameNumbers("blue-break", {
+                start: 0,
+                end: 4,
+            }),
+            ...breakConfig,
+        });
+        this.anims.create({
+            key: "purpleBreak",
+            frames: this.anims.generateFrameNumbers("purple-break", {
+                start: 0,
+                end: 4,
+            }),
+            ...breakConfig,
+        });
+    }
+
     create() {
+        this.createBreakAnimations();
         this.scene.start("MenuScene");
     }
 }

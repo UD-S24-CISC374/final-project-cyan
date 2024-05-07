@@ -81,68 +81,6 @@ export default class FiveByFiveLevel extends Phaser.Scene {
             .setInteractive()
             .on("pointerdown", this.clickPause, this);
         this.add.existing(this.pauseButton);
-
-        // Create break animations
-        this.createBreakAnimations();
-    }
-
-    private handleInitialGrid() {
-        let matches = this.blockGrid.checkForTruthy();
-        if (matches > 0) {
-            this.scoreDisplay.incrementScore(matches);
-        }
-    }
-
-    // Function to create break animations
-    private createBreakAnimations() {
-        const breakConfig = {
-            frameRate: 10,
-            repeat: 0,
-            hideOnComplete: true,
-        };
-
-        // Animation creation for each color
-        this.anims.create({
-            key: "greenBreak",
-            frames: this.anims.generateFrameNumbers("green-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        // Repeat for other colors
-        this.anims.create({
-            key: "redBreak",
-            frames: this.anims.generateFrameNumbers("red-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        this.anims.create({
-            key: "yellowBreak",
-            frames: this.anims.generateFrameNumbers("yellow-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        this.anims.create({
-            key: "blueBreak",
-            frames: this.anims.generateFrameNumbers("blue-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        this.anims.create({
-            key: "purpleBreak",
-            frames: this.anims.generateFrameNumbers("purple-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
     }
 
     mouseClick(
