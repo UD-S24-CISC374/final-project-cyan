@@ -1,6 +1,10 @@
 import Phaser from "phaser";
 import BooleanBlock from "./booleanBlock";
 
+interface Ratios {
+    [index: string]: number;
+}
+
 export default class BlockGrid extends Phaser.GameObjects.Container {
     blockMatrix: Array<Array<BooleanBlock>>;
     private blockSize: number = 100;
@@ -12,13 +16,14 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
     private operatorCreated: number = 0;
     private notCreated: number = 0;
 
-    private IDEAL_BLOCK_RATIOS_3: { [blockType: string]: number } = {
-        true: 0.3,
-        false: 0.3,
-        and: 0.2,
-        or: 0.2,
+    private IDEAL_BLOCK_RATIOS_3: Ratios = {
+        true: 0.2,
+        false: 0.2,
+        and: 0.3,
+        or: 0.3,
+        not: 0,
     };
-    private IDEAL_BLOCK_RATIOS_5: { [blockType: string]: number } = {
+    private IDEAL_BLOCK_RATIOS_5: Ratios = {
         true: 0.3,
         false: 0.3,
         and: 0.15,
@@ -39,7 +44,8 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         for (let i = 0; i < sideLength; i++) {
             this.blockMatrix.push([]);
             for (let j = 0; j < sideLength; j++) {
-                let block = this.createNewBlock(i, j);
+                let blockType = this.determineBlockType();
+                let block = this.createNewBlock(i, j, blockType);
                 this.blockMatrix[i].push(block);
                 this.add(block);
             }
@@ -60,39 +66,29 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         this.notCreated = 0;
     }
 
-    // public createRandomBlock(row: number, col: number): BooleanBlock {
-    //     let totalBlocks = this.blockMatrix.length * this.blockMatrix[0].length;
-    //     let trueCount = Math.ceil(totalBlocks * 0.3);
-    //     let falseCount = trueCount;
-
-    //     let blockType: string;
-
-    //     if (this.trueCreated < trueCount) {
-    //         blockType = "true";
-    //         this.trueCreated++;
-    //     } else if (this.falseCreated < falseCount) {
-    //         blockType = "false";
-    //         this.falseCreated++;
-    //     } else {
-    //         blockType = this.randomOperator();
-    //         this.operatorCreated++;
-    //     }
-
-    //     let x = col * (this.blockSize + this.blockSpacing);
-    //     let y = row * (this.blockSize + this.blockSpacing);
-    //     let block = new BooleanBlock(this.scene, x, y, blockType, [row, col]);
-    //     block.setInteractive();
-    //     return block;
-    // }
-
-    public createNewBlock(row: number, col: number): BooleanBlock {
-        let blockType = this.determineBlockType();
+    public createNewBlock(
+        row: number,
+        col: number,
+        blockType: string
+    ): BooleanBlock {
+        // let blockType = this.determineBlockType();
         let x = col * (this.blockSize + this.blockSpacing);
         let y = row * (this.blockSize + this.blockSpacing);
         let block = new BooleanBlock(this.scene, x, y, blockType, [row, col]);
 
         block.setInteractive();
         return block;
+    }
+
+    private getCurrentRatios(): Ratios {
+        const totalBlocks = this.countTotalBlocks();
+        return {
+            true: this.trueCreated / totalBlocks,
+            false: this.falseCreated / totalBlocks,
+            and: this.operatorCreated / totalBlocks,
+            or: this.operatorCreated / totalBlocks,
+            not: this.includeNotBlocks ? this.notCreated / totalBlocks : 0,
+        };
     }
 
     private determineBlockType(): string {

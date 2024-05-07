@@ -34,6 +34,8 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
 
         this.input.on("pointerdown", this.mouseClick, this);
 
+        this.handleInitialGrid();
+
         const message = `Phaser v${Phaser.VERSION}`;
         this.add
             .text(this.cameras.main.width - 15, 15, message, {
@@ -85,7 +87,7 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
         pointer: Phaser.Input.Pointer,
         currentlyOver: Array<Phaser.GameObjects.GameObject>
     ) {
-        if (currentlyOver[0] instanceof BooleanBlock) {
+        if (!this.paused && currentlyOver[0] instanceof BooleanBlock) {
             const currentLocation = currentlyOver[0].getGridLocation();
             if (this.locationBuffer == undefined) {
                 this.locationBuffer = currentLocation;
