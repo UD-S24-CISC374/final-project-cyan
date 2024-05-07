@@ -173,9 +173,7 @@ export default class AdvancedTutorial extends Phaser.Scene {
     }
 
     updateTutorialState() {
-        const truthyStatements = this.blockGrid.findTruthyStatements();
-
-        if (truthyStatements.length > 0 && this.timer.paused) {
+        if (this.timer.paused) {
             this.startTimer();
         }
     }
