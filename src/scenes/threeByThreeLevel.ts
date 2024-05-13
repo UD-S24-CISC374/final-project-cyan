@@ -86,7 +86,7 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
         currentlyOver: Array<Phaser.GameObjects.GameObject>
     ) {
         if (!this.paused && currentlyOver[0] instanceof BooleanBlock) {
-            const currentBlock = currentlyOver[0] as BooleanBlock; // Cast for clarity
+            const currentBlock = currentlyOver[0] as BooleanBlock;
             const currentLocation = currentBlock.getGridLocation();
 
             if (this.locationBuffer === undefined) {
@@ -94,27 +94,27 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
                 this.locationBuffer = currentLocation;
                 currentBlock.setTint(0xfff300); // Tint the selected block
             } else {
-                // check if it's the same block or a different one
+                // Try to retrieve the previously selected block safely
+                const previousBlock = this.blockGrid.getBlockAtLocation(
+                    this.locationBuffer
+                );
+                if (previousBlock !== null) {
+                    previousBlock.clearTint(); // Safely clear the tint only if previousBlock is not null
+                }
+
                 if (
                     this.locationBuffer[0] === currentLocation[0] &&
                     this.locationBuffer[1] === currentLocation[1]
                 ) {
-                    // The same block was clicked twice untint and deselect
-                    currentBlock.clearTint();
+                    // The same block was clicked again deselect it
                     this.locationBuffer = undefined;
-                } else {
-                    // A different block was clicked -> swap
-                    const previousBlock = this.blockGrid.getBlockAtLocation(
+                } else if (previousBlock) {
+                    // A different block was clicked and previousBlock is not null -> swap
+                    let promises = this.blockGrid.switchBlocks(
+                        currentLocation,
                         this.locationBuffer
                     );
-                    previousBlock.clearTint(); // Untint the previously selected block
-
-                    let promises: Array<Promise<void>> =
-                        this.blockGrid.switchBlocks(
-                            currentLocation,
-                            this.locationBuffer
-                        );
-                    this.locationBuffer = undefined; // Clear the selection buffer
+                    this.locationBuffer = undefined;
                     Promise.all(promises).then(() => {
                         const matches: number = this.blockGrid.checkForTruthy();
                         this.scoreDisplay.incrementScore(matches);
