@@ -86,20 +86,40 @@ export default class FiveByFiveLevel extends Phaser.Scene {
         currentlyOver: Array<Phaser.GameObjects.GameObject>
     ) {
         if (!this.paused && currentlyOver[0] instanceof BooleanBlock) {
-            const currentLocation = currentlyOver[0].getGridLocation();
-            if (this.locationBuffer == undefined) {
+            const currentBlock = currentlyOver[0] as BooleanBlock; // Cast for clarity
+            const currentLocation = currentBlock.getGridLocation();
+
+            if (this.locationBuffer === undefined) {
+                // No block is currently selected, select this one
                 this.locationBuffer = currentLocation;
-            } else if (this.locationBuffer !== currentLocation) {
-                let promises: Array<Promise<void>> =
-                    this.blockGrid.switchBlocks(
-                        currentLocation,
+                currentBlock.setTint(0xfff300); // Tint the selected block
+            } else {
+                // check if it's the same block or a different one
+                if (
+                    this.locationBuffer[0] === currentLocation[0] &&
+                    this.locationBuffer[1] === currentLocation[1]
+                ) {
+                    // The same block was clicked twice untint and deselect
+                    currentBlock.clearTint();
+                    this.locationBuffer = undefined;
+                } else {
+                    // A different block was clicked -> swap
+                    const previousBlock = this.blockGrid.getBlockAtLocation(
                         this.locationBuffer
                     );
-                this.locationBuffer = undefined;
-                Promise.all(promises).then(() => {
-                    const matches: number = this.blockGrid.checkForTruthy();
-                    this.scoreDisplay.incrementScore(matches);
-                });
+                    previousBlock.clearTint(); // Untint the previously selected block
+
+                    let promises: Array<Promise<void>> =
+                        this.blockGrid.switchBlocks(
+                            currentLocation,
+                            this.locationBuffer
+                        );
+                    this.locationBuffer = undefined; // Clear the selection buffer
+                    Promise.all(promises).then(() => {
+                        const matches: number = this.blockGrid.checkForTruthy();
+                        this.scoreDisplay.incrementScore(matches);
+                    });
+                }
             }
         }
     }
