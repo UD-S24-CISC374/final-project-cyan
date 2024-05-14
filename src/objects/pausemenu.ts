@@ -2,14 +2,14 @@ import Phaser from "phaser";
 
 export default class PauseMenu extends Phaser.GameObjects.Container {
     private pausedText: Phaser.GameObjects.Text;
-    private mainMenuButton: Phaser.GameObjects.Image;
-    private resumeButton: Phaser.GameObjects.Image;
+    public mainMenuButton: Phaser.GameObjects.Image;
+    public resumeButton: Phaser.GameObjects.Image;
     private background: Phaser.GameObjects.Rectangle;
 
     constructor(
         scene: Phaser.Scene,
-        resumeFunc: () => void,
-        mainMenuFunc: () => void
+        resumeFunc: (button: Phaser.GameObjects.Image) => void,
+        mainMenuFunc: (button: Phaser.GameObjects.Image) => void
     ) {
         super(scene);
 
