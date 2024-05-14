@@ -1,16 +1,16 @@
 # Game Name
 
-TEXT GOES HERE
+Boolean Bonanza
 
 # Team Color
 
-TEXT GOES HERE
+cyan
 
 # Developers
 
--   Name (email)
--   Name (email)
--   Name (email)
+-   Alex Trexler (alextrex@udel.edu)
+-   Michael Murphy (murphyme@udel.edu)
+-   Clay Wilfong (clayw@udel.edu)
 
 # Blurb
 
