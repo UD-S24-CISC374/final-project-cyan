@@ -34,8 +34,6 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
 
         this.input.on("pointerdown", this.mouseClick, this);
 
-        this.handleInitialGrid();
-
         const message = `Phaser v${Phaser.VERSION}`;
         this.add
             .text(this.cameras.main.width - 15, 15, message, {
@@ -81,68 +79,6 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
             .setInteractive()
             .on("pointerdown", this.clickPause, this);
         this.add.existing(this.pauseButton);
-
-        // Create break animations
-        this.createBreakAnimations();
-    }
-
-    private handleInitialGrid() {
-        let matches = this.blockGrid.checkForTruthy();
-        if (matches > 0) {
-            this.scoreDisplay.incrementScore(matches);
-        }
-    }
-
-    // Function to create break animations
-    private createBreakAnimations() {
-        const breakConfig = {
-            frameRate: 10,
-            repeat: 0,
-            hideOnComplete: true,
-        };
-
-        // Animation creation for each color
-        this.anims.create({
-            key: "greenBreak",
-            frames: this.anims.generateFrameNumbers("green-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        // Repeat for other colors
-        this.anims.create({
-            key: "redBreak",
-            frames: this.anims.generateFrameNumbers("red-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        this.anims.create({
-            key: "yellowBreak",
-            frames: this.anims.generateFrameNumbers("yellow-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        this.anims.create({
-            key: "blueBreak",
-            frames: this.anims.generateFrameNumbers("blue-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        this.anims.create({
-            key: "purpleBreak",
-            frames: this.anims.generateFrameNumbers("purple-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
     }
 
     mouseClick(
@@ -150,20 +86,40 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
         currentlyOver: Array<Phaser.GameObjects.GameObject>
     ) {
         if (!this.paused && currentlyOver[0] instanceof BooleanBlock) {
-            const currentLocation = currentlyOver[0].getGridLocation();
-            if (this.locationBuffer == undefined) {
+            const currentBlock = currentlyOver[0] as BooleanBlock;
+            const currentLocation = currentBlock.getGridLocation();
+
+            if (this.locationBuffer === undefined) {
+                // No block is currently selected, select this one
                 this.locationBuffer = currentLocation;
-            } else if (this.locationBuffer !== currentLocation) {
-                let promises: Array<Promise<void>> =
-                    this.blockGrid.switchBlocks(
+                currentBlock.setTint(0xfff300); // Tint the selected block
+            } else {
+                // Try to retrieve the previously selected block safely
+                const previousBlock = this.blockGrid.getBlockAtLocation(
+                    this.locationBuffer
+                );
+                if (previousBlock !== null) {
+                    previousBlock.clearTint(); // Safely clear the tint only if previousBlock is not null
+                }
+
+                if (
+                    this.locationBuffer[0] === currentLocation[0] &&
+                    this.locationBuffer[1] === currentLocation[1]
+                ) {
+                    // The same block was clicked again deselect it
+                    this.locationBuffer = undefined;
+                } else if (previousBlock) {
+                    // A different block was clicked and previousBlock is not null -> swap
+                    let promises = this.blockGrid.switchBlocks(
                         currentLocation,
                         this.locationBuffer
                     );
-                this.locationBuffer = undefined;
-                Promise.all(promises).then(() => {
-                    const matches: number = this.blockGrid.checkForTruthy();
-                    this.scoreDisplay.incrementScore(matches);
-                });
+                    this.locationBuffer = undefined;
+                    Promise.all(promises).then(() => {
+                        const matches: number = this.blockGrid.checkForTruthy();
+                        this.scoreDisplay.incrementScore(matches);
+                    });
+                }
             }
         }
     }

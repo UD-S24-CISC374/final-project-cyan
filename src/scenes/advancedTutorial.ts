@@ -1,11 +1,10 @@
 import Phaser from "phaser";
 import BlockGrid from "../objects/blockGrid";
-import FpsText from "../objects/fpsText";
 import BooleanBlock from "../objects/booleanBlock";
 import ScoreDisplay from "../objects/scoreDisplay";
+import PauseMenu from "../objects/pausemenu";
 
 export default class AdvancedTutorial extends Phaser.Scene {
-    fpsText: FpsText;
     locationBuffer: [number, number] | undefined;
     blockGrid: BlockGrid;
     gameplayMusic: Phaser.Sound.BaseSound;
@@ -14,18 +13,22 @@ export default class AdvancedTutorial extends Phaser.Scene {
     timer: Phaser.Time.TimerEvent;
     timeLimitInSeconds: number;
     timerText: Phaser.GameObjects.Text;
+    pauseButton: Phaser.GameObjects.Image;
+    pauseMenu: PauseMenu;
+    paused: boolean;
+    pauseLock: boolean = true;
 
     constructor() {
         super({ key: "AdvancedTutorial" });
     }
 
     create() {
+        this.paused = false;
         this.blockGrid = new BlockGrid(this, 5, true); // Initialize a 5x5 grid
-        this.fpsText = new FpsText(this);
         this.gameplayMusic = this.sound.add("gameplay-music");
         this.gameplayMusic.play({ volume: 0.3, loop: true });
         this.scoreDisplay = new ScoreDisplay(this, 620, 30);
-        this.timeLimitInSeconds = 10;
+        this.timeLimitInSeconds = 60;
 
         this.input.on("pointerdown", this.mouseClick, this);
 
@@ -39,7 +42,7 @@ export default class AdvancedTutorial extends Phaser.Scene {
 
         this.instructionImage = this.add
             .image(180, 600, "instruction-4")
-            .setScale(0.075);
+            .setScale(0.6);
 
         this.timerText = this.add
             .text(
@@ -52,61 +55,32 @@ export default class AdvancedTutorial extends Phaser.Scene {
                 }
             )
             .setOrigin(1, 1);
+        this.timer = this.time.addEvent({
+            delay: 1000,
+            callback: () => {
+                this.timeLimitInSeconds--;
+                if (this.timeLimitInSeconds <= 0) {
+                    this.gameplayMusic.stop();
+                    this.scene.start("PostLevelScene", {
+                        finalScore: this.scoreDisplay.getScore(),
+                    });
+                }
+            },
+            callbackScope: this,
+            loop: true,
+            paused: true,
+        });
 
-        // Create break animations
-        this.createBreakAnimations();
-    }
-
-    // Function to create break animations
-    private createBreakAnimations() {
-        const breakConfig = {
-            frameRate: 10,
-            repeat: 0,
-            hideOnComplete: true,
-        };
-
-        // Animation creation for each color
-        this.anims.create({
-            key: "greenBreak",
-            frames: this.anims.generateFrameNumbers("green-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        // Repeat for other colors
-        this.anims.create({
-            key: "redBreak",
-            frames: this.anims.generateFrameNumbers("red-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        this.anims.create({
-            key: "yellowBreak",
-            frames: this.anims.generateFrameNumbers("yellow-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        this.anims.create({
-            key: "blueBreak",
-            frames: this.anims.generateFrameNumbers("blue-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
-        this.anims.create({
-            key: "purpleBreak",
-            frames: this.anims.generateFrameNumbers("purple-break", {
-                start: 0,
-                end: 5,
-            }),
-            ...breakConfig,
-        });
+        this.pauseButton = new Phaser.GameObjects.Image(
+            this,
+            50,
+            50,
+            "pause-button"
+        )
+            .setScale(0.1)
+            .setInteractive()
+            .on("pointerdown", this.clickPause, this);
+        this.add.existing(this.pauseButton);
     }
 
     mouseClick(
@@ -135,35 +109,72 @@ export default class AdvancedTutorial extends Phaser.Scene {
     }
 
     update() {
-        this.fpsText.update();
-
         this.timerText.setText(`Time: ${this.timeLimitInSeconds}`);
     }
 
-    updateTutorialState() {
-        const truthyStatements = this.blockGrid.findTruthyStatements();
+    clickPause() {
+        if (!this.paused) {
+            this.paused = true;
+            let promise = new Promise<void>((resolve: () => void) => {
+                this.sound.play("button-press", { volume: 0.4 });
+                this.pauseButton.setScale(0.09);
+                setTimeout(resolve, 200);
+            });
 
-        if (truthyStatements && truthyStatements.length > 0) {
-            const score = this.scoreDisplay.getScore();
+            Promise.resolve(promise).then(() => {
+                this.pauseButton.setScale(0.1);
+                this.timer.paused = true;
+                this.pauseMenu = new PauseMenu(
+                    this,
+                    this.resumeFunc,
+                    this.mainMenuFunc
+                );
+                this.add.existing(this.pauseMenu);
+            });
+        }
+    }
 
-            if (score >= 1 && score <= 2) {
-                this.instructionImage.setTexture("instruction-5");
+    mainMenuFunc() {
+        let promise = new Promise<void>((resolve: () => void) => {
+            this.sound.play("button-press", { volume: 0.4 });
+            this.pauseMenu.mainMenuButton.setScale(0.9);
+            setTimeout(resolve, 200);
+        });
 
-                this.timer = this.time.addEvent({
-                    delay: 1000,
-                    callback: () => {
-                        this.timeLimitInSeconds--;
-                        if (this.timeLimitInSeconds <= 0) {
-                            this.gameplayMusic.stop();
-                            this.scene.start("PostLevelScene", {
-                                finalScore: this.scoreDisplay.getScore(),
-                            });
-                        }
-                    },
-                    callbackScope: this,
-                    loop: true,
-                });
+        Promise.resolve(promise).then(() => {
+            this.pauseMenu.mainMenuButton.setScale(1);
+            this.gameplayMusic.pause();
+            this.scene.start("MenuScene");
+        });
+    }
+
+    resumeFunc() {
+        let promise = new Promise<void>((resolve: () => void) => {
+            this.sound.play("button-press", { volume: 0.4 });
+            this.pauseMenu.resumeButton.setScale(0.9);
+            setTimeout(resolve, 200);
+        });
+
+        Promise.resolve(promise).then(() => {
+            this.paused = false;
+            this.pauseMenu.resumeButton.setScale(1);
+            this.pauseMenu.destroy();
+            if (!this.pauseLock) {
+                this.timer.paused = false;
             }
+        });
+    }
+
+    startTimer() {
+        this.instructionImage.setTexture("instruction-5");
+
+        this.pauseLock = false;
+        this.timer.paused = false;
+    }
+
+    updateTutorialState() {
+        if (this.timer.paused) {
+            this.startTimer();
         }
     }
 }
