@@ -45,7 +45,7 @@ TEXT GOES HERE
 
 # Gameplay Video
 
-TEXT GOES HERE
+https://github.com/UD-S24-CISC374/final-project-cyan/assets/71342672/f4ef9931-9567-4dc9-b89a-605aa9048807
 
 # Educational Game Design Document
 
@@ -54,3 +54,7 @@ Link to our [egdd](Educational Game Design Document)
 # Credits
 
 TEXT GOES HERE
+
+
+
+
