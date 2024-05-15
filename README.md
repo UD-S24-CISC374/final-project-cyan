@@ -1,6 +1,4 @@
-# Game Name
-
-Boolean Bonanza
+# Boolean Bonanza
 
 # Team Color
 
@@ -45,7 +43,7 @@ Scoring / Time
 
 # Gameplay Video
 
-https://github.com/UD-S24-CISC374/final-project-cyan/assets/71342672/f4ef9931-9567-4dc9-b89a-605aa9048807
+![gameplay video](https://www.youtube.com/watch?v=qgengQMsyD0)
 
 # Educational Game Design Document
 
