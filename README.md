@@ -41,7 +41,7 @@ Scoring / Time
 
 # Screenshot
 
-TEXT GOES HERE
+![screenshot](https://github.com/UD-S24-CISC374/final-project-cyan/blob/main/docs/large.png?raw=true)
 
 # Gameplay Video
 
