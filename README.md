@@ -53,7 +53,17 @@ Link to our [egdd](Educational Game Design Document)
 
 # Credits
 
-TEXT GOES HERE
+Boolean block textures: Alex Trexler
+
+Block break sound: Cork by Blender Foundation (submitted by Lamoot) https://opengameart.org/content/cork
+
+Gameplay background music: Contemplation by Bart https://opengameart.org/content/contemplation
+
+Button press sound: Cloud Click by Mobeyee Sounds https://mobeyee.com
+
+Main menu music: Puzzle Menu by caret7 https://opengameart.org/content/puzzle-menu
+
+Block Break Animations: AlotofImpacts - 5 Frame Impacts by JoesAlotofthings https://opengameart.org/users/joesalotofthings
 
 
 
