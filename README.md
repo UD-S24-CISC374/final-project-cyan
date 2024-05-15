@@ -47,7 +47,7 @@ Scoring / Time
 
 # Educational Game Design Document
 
-Link to our [egdd](https://ud-s24-cisc374.github.io/final-project-cyan/docs/egdd.html)
+Link to our [egdd](https://github.com/UD-S24-CISC374/final-project-cyan/blob/main/docs/egdd.md)
 
 # Credits
 
