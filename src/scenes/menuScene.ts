@@ -13,13 +13,20 @@ export default class MenuScene extends Phaser.Scene {
     create() {
         this.add.image(640, 360, "menu-backplate"); // backplate image for title and background
 
+        this.add
+            .text(800, 250, "Start Interactive Tutorial", {
+                font: "38px Arial",
+                color: "#fff",
+            })
+            .setOrigin(0.5);
+
         // main menu music
         this.menuMusic = this.sound.add("menu-music", { loop: true });
         this.menuMusic.play();
 
         this.tutorialButton = new Phaser.GameObjects.Image(
             this,
-            640,
+            440,
             250,
             "tutorial-button"
         );
@@ -34,7 +41,7 @@ export default class MenuScene extends Phaser.Scene {
         // play button for 5x5 mode
         this.play5Button = new Phaser.GameObjects.Image(
             this,
-            640,
+            440,
             550,
             "play-5-button"
         );
@@ -49,7 +56,7 @@ export default class MenuScene extends Phaser.Scene {
         // play button for 3x3 mode
         this.play3Button = new Phaser.GameObjects.Image(
             this,
-            640,
+            440,
             400,
             "play-3-button"
         );
@@ -60,6 +67,21 @@ export default class MenuScene extends Phaser.Scene {
                 this.clickPlay(this.play3Button, "ThreeByThreeLevel");
             });
         this.add.existing(this.play3Button);
+
+        this.displayHighScores();
+    }
+
+    displayHighScores() {
+        const highScore3x3 = localStorage.getItem("highScore-3x3") ?? "0";
+        const highScore5x5 = localStorage.getItem("highScore-5x5") ?? "0";
+
+        const style = { font: "38px Arial", fill: "#fff" };
+        this.add
+            .text(800, 400, `3x3 High Score: ${highScore3x3}`, style)
+            .setOrigin(0.5);
+        this.add
+            .text(800, 550, `5x5 High Score: ${highScore5x5}`, style)
+            .setOrigin(0.5);
     }
 
     // run when play button is pressed
