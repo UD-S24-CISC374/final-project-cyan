@@ -14,9 +14,11 @@ export default class TutorialLevel extends Phaser.Scene {
     pauseButton: Phaser.GameObjects.Image;
     pauseMenu: PauseMenu;
     paused: boolean;
+    currentTutorialStep: number;
 
     constructor() {
         super({ key: "TutorialLevel" });
+        this.currentTutorialStep = 1;
     }
 
     create() {
@@ -24,6 +26,7 @@ export default class TutorialLevel extends Phaser.Scene {
         this.gameplayMusic = this.sound.add("gameplay-music");
         this.gameplayMusic.play({ volume: 0.3, loop: true });
         this.scoreDisplay = new ScoreDisplay(this, 620, 30);
+        this.currentTutorialStep = 1;
 
         this.input.on("pointerdown", this.mouseClick, this);
 
@@ -50,6 +53,20 @@ export default class TutorialLevel extends Phaser.Scene {
             .setInteractive()
             .on("pointerdown", this.clickPause, this);
         this.add.existing(this.pauseButton);
+    }
+
+    updateInstructionImage() {
+        switch (this.currentTutorialStep) {
+            case 1:
+                this.instructionImage.setTexture("instruction-1");
+                break;
+            case 2:
+                this.instructionImage.setTexture("instruction-2");
+                break;
+            case 3:
+                this.instructionImage.setTexture("instruction-3");
+                break;
+        }
     }
 
     clickPause() {
@@ -138,26 +155,27 @@ export default class TutorialLevel extends Phaser.Scene {
                     Promise.all(promises).then(() => {
                         const matches: number = this.blockGrid.checkForTruthy();
                         this.scoreDisplay.incrementScore(matches);
-                        this.updateTutorialState();
+
+                        if (this.currentTutorialStep === 1) {
+                            // Player has moved a block for the first time
+                            this.currentTutorialStep = 2; // Advance to next step regardless of making a True
+                            this.updateInstructionImage();
+                        } else if (
+                            this.currentTutorialStep === 2 &&
+                            matches > 0
+                        ) {
+                            // Player has successfully created a True statement in the correct step
+                            this.currentTutorialStep = 3;
+                            this.updateInstructionImage();
+                        }
                     });
                 }
             }
         }
     }
 
-    update() {}
-
-    updateTutorialState() {
-        if (!this.hasMovedBlock) {
-            this.instructionImage.setTexture("instruction-2");
-            this.hasMovedBlock = true; // Set flag to true after first movement
-        }
-        const score = this.scoreDisplay.getScore();
-
-        if (score >= 1 && score < 12) {
-            this.instructionImage.setTexture("instruction-3");
-        } else if (score >= 12) {
-            this.gameplayMusic.stop();
+    update() {
+        if (this.scoreDisplay.getScore() >= 12) {
             this.scene.start("AdvancedTutorial");
         }
     }
