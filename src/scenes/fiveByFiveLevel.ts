@@ -4,6 +4,15 @@ import BooleanBlock from "../objects/booleanBlock";
 import ScoreDisplay from "../objects/scoreDisplay";
 import PauseMenu from "../objects/pausemenu";
 
+function updateHighScore(newScore: number, mode: string) {
+    const key = `highScore-${mode}`;
+    const currentHighScore =
+        parseInt(localStorage.getItem(key) ?? "0", 10) || 0;
+    if (newScore > currentHighScore) {
+        localStorage.setItem(key, newScore.toString());
+    }
+}
+
 export default class FiveByFiveLevel extends Phaser.Scene {
     locationBuffer: [number, number] | undefined;
     blockGrid: BlockGrid;
@@ -47,6 +56,7 @@ export default class FiveByFiveLevel extends Phaser.Scene {
             callback: () => {
                 this.timeLimitInSeconds--;
                 if (this.timeLimitInSeconds <= 0) {
+                    updateHighScore(this.scoreDisplay.getScore(), "5x5");
                     this.gameplayMusic.stop();
                     this.scene.start("PostLevelScene", {
                         finalScore: this.scoreDisplay.getScore(),
