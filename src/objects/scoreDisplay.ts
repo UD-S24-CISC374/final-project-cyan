@@ -12,22 +12,17 @@ export default class ScoreDisplay extends Phaser.GameObjects.Container {
         startScore: number = 0
     ) {
         super(scene, x, y);
-        this.scoreBox = new Phaser.GameObjects.Rectangle(
-            this.scene,
-            x,
-            y,
-            150,
-            50,
-            0
-        );
-        this.add(this.scoreBox);
-        this.scene.add.existing(this.scoreBox);
         this.scoreText = new Phaser.GameObjects.Text(
             this.scene,
             x - 65,
             y - 10,
-            `Score: ${startScore}`,
-            { fontFamily: "Courier", fontSize: "25px", align: "center" }
+            `${startScore}`,
+            {
+                fontFamily: "Arial",
+                fontSize: "45px",
+                align: "center",
+                color: "black",
+            }
         );
         this.add(this.scoreText);
         this.scene.add.existing(this.scoreText);
@@ -35,7 +30,7 @@ export default class ScoreDisplay extends Phaser.GameObjects.Container {
     }
 
     public changeScore(newScore: number) {
-        this.scoreText.setText(`Score: ${newScore}`);
+        this.scoreText.setText(`${newScore}`);
         this.score = newScore;
     }
 
