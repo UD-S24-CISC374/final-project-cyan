@@ -24,32 +24,28 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
     pauseButton: Phaser.GameObjects.Image;
     pauseMenu: PauseMenu;
     paused: boolean;
+    background: Phaser.GameObjects.Image;
 
     constructor() {
         super({ key: "ThreeByThreeLevel" });
     }
 
-    preload() {
-        // Preload assets if not done in PreloadScene, otherwise this is not needed
-    }
-
     create() {
         this.paused = false;
         this.timeLimitInSeconds = 120;
+        this.background = new Phaser.GameObjects.Image(
+            this,
+            640,
+            360,
+            "3x3-backplate"
+        );
+        this.add.existing(this.background);
         this.blockGrid = new BlockGrid(this, 3, false); // Initialize a 3x3 grid
         this.gameplayMusic = this.sound.add("gameplay-music");
         this.gameplayMusic.play({ volume: 0.3, loop: true });
-        this.scoreDisplay = new ScoreDisplay(this, 620, 30);
+        this.scoreDisplay = new ScoreDisplay(this, 900, 38);
 
         this.input.on("pointerdown", this.mouseClick, this);
-
-        const message = `Phaser v${Phaser.VERSION}`;
-        this.add
-            .text(this.cameras.main.width - 15, 15, message, {
-                color: "#000000",
-                fontSize: "24px",
-            })
-            .setOrigin(1, 0);
 
         this.timer = this.time.addEvent({
             delay: 1000,
@@ -68,15 +64,11 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
         });
 
         this.timerText = this.add
-            .text(
-                this.cameras.main.width - 15,
-                this.cameras.main.height - 15,
-                `Time: ${this.timeLimitInSeconds}`,
-                {
-                    color: "#000000",
-                    fontSize: "24px",
-                }
-            )
+            .text(550, 77, `${this.timeLimitInSeconds}`, {
+                fontFamily: "Arial",
+                color: "#000000",
+                fontSize: "45px",
+            })
             .setOrigin(1, 1);
 
         this.pauseButton = new Phaser.GameObjects.Image(
@@ -89,6 +81,9 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
             .setInteractive()
             .on("pointerdown", this.clickPause, this);
         this.add.existing(this.pauseButton);
+
+        this.blockGrid.setX(528);
+        this.blockGrid.setY(250);
     }
 
     mouseClick(
@@ -186,6 +181,6 @@ export default class ThreeByThreeLevel extends Phaser.Scene {
     }
 
     update() {
-        this.timerText.setText(`Time: ${this.timeLimitInSeconds}`);
+        this.timerText.setText(`${this.timeLimitInSeconds}`);
     }
 }

@@ -15,6 +15,7 @@ export default class TutorialLevel extends Phaser.Scene {
     pauseMenu: PauseMenu;
     paused: boolean;
     currentTutorialStep: number;
+    background: Phaser.GameObjects.Image;
 
     constructor() {
         super({ key: "TutorialLevel" });
@@ -22,21 +23,20 @@ export default class TutorialLevel extends Phaser.Scene {
     }
 
     create() {
+        this.background = new Phaser.GameObjects.Image(
+            this,
+            640,
+            360,
+            "3x3-backplate"
+        );
+        this.add.existing(this.background);
         this.blockGrid = new BlockGrid(this, 3, false); // Initialize a 3x3 grid
         this.gameplayMusic = this.sound.add("gameplay-music");
         this.gameplayMusic.play({ volume: 0.3, loop: true });
-        this.scoreDisplay = new ScoreDisplay(this, 620, 30);
+        this.scoreDisplay = new ScoreDisplay(this, 900, 38);
         this.currentTutorialStep = 1;
 
         this.input.on("pointerdown", this.mouseClick, this);
-
-        const message = `Phaser v${Phaser.VERSION}`;
-        this.add
-            .text(this.cameras.main.width - 15, 15, message, {
-                color: "#000000",
-                fontSize: "24px",
-            })
-            .setOrigin(1, 0);
 
         this.instructionImage = this.add
             .image(180, 600, "instruction-1")
@@ -53,6 +53,9 @@ export default class TutorialLevel extends Phaser.Scene {
             .setInteractive()
             .on("pointerdown", this.clickPause, this);
         this.add.existing(this.pauseButton);
+
+        this.blockGrid.setX(528);
+        this.blockGrid.setY(250);
     }
 
     updateInstructionImage() {

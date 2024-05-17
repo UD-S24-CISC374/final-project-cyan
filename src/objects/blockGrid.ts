@@ -301,7 +301,7 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
             let indexesToBreak = this.getIndexesToBreak(foundTruthy);
             let breakingTweenPromises: Promise<void>[] = [];
 
-            this.scene.sound.play("block-break");
+            this.scene.sound.play("block-break", { volume: 0.5 });
             for (let i = 0; i < indexesToBreak.length; i++) {
                 breakingTweenPromises.push(
                     this.breakBlockAtIndex(indexesToBreak[i])
@@ -419,8 +419,8 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         ] as BooleanBlock;
         const animPromise = new Promise<void>((resolve) => {
             const breakKey = this.getBreakAnimationKey(block);
-            const horizontalAdjustment = this.includeNotBlocks ? 350 : 460;
-            const verticalAdjustment = this.includeNotBlocks ? 80 : 190;
+            const horizontalAdjustment = this.includeNotBlocks ? 370 : 460;
+            const verticalAdjustment = this.includeNotBlocks ? 130 : 190;
 
             // Create and play the animation
             const anim = this.scene.add
