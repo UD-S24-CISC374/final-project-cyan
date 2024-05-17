@@ -29,7 +29,12 @@ export default class PauseMenu extends Phaser.GameObjects.Container {
             370,
             100,
             "Game Paused",
-            { color: "#000000", fontSize: 80, backgroundColor: "#FFFFFF" }
+            {
+                fontFamily: "Arial",
+                color: "#000000",
+                fontSize: 80,
+                backgroundColor: "#FFFFFF",
+            }
         );
         this.add(this.pausedText);
 

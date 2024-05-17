@@ -16,8 +16,8 @@ export default class PostLevelScene extends Phaser.Scene {
     create() {
         this.add.text(420, 200, `Final Score: ${this.finalScore}`, {
             color: "black",
-            fontFamily: "Courier",
-            fontSize: "50px",
+            fontFamily: "Arial",
+            fontSize: "70px",
             align: "center",
         });
 

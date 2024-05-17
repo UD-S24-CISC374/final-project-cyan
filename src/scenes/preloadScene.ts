@@ -26,6 +26,7 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image("resume-button", "assets/menu/ResumeButton.png");
         this.load.image("pause-button", "assets/menu/PauseButton.png");
         this.load.image("5x5-backplate", "assets/backgrounds/5x5backplate.png");
+        this.load.image("3x3-backplate", "assets/backgrounds/3x3backplate.png");
         this.load.audio("button-press", "assets/audio/effects/click.mp3");
         this.load.audio("menu-music", "assets/audio/music/puzzlemenu.ogg");
         this.load.audio("block-break", "assets/audio/effects/cork.mp3");
