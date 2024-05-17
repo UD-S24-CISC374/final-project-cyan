@@ -419,8 +419,8 @@ export default class BlockGrid extends Phaser.GameObjects.Container {
         ] as BooleanBlock;
         const animPromise = new Promise<void>((resolve) => {
             const breakKey = this.getBreakAnimationKey(block);
-            const horizontalAdjustment = this.includeNotBlocks ? 370 : 460;
-            const verticalAdjustment = this.includeNotBlocks ? 130 : 190;
+            const horizontalAdjustment = this.includeNotBlocks ? 370 : 480;
+            const verticalAdjustment = this.includeNotBlocks ? 130 : 200;
 
             // Create and play the animation
             const anim = this.scene.add
